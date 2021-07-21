@@ -1,0 +1,46 @@
+apply plugin: 'com.android.application'
+
+android {
+    signingConfigs {
+        tttkey {
+            storeFile file('E:\\ASP\\Tic-Tac-Toe\\tttkey')
+            storePassword 'tttkey'
+            keyAlias 'tttkey'
+            keyPassword 'tttkey'
+        }
+    }
+    compileSdkVersion 30
+    buildToolsVersion "26.0.3"
+
+    defaultConfig {
+        applicationId "simpleapps.tictactoe"
+        minSdkVersion 19
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1"
+        signingConfig signingConfigs.tttkey
+        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            shrinkResources true
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.tttkey
+            multiDexEnabled true
+        }
+        debug {
+            signingConfig signingConfigs.tttkey
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'com.google.android.material:material:1.4.0'
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    testImplementation 'junit:junit:4.12'
+}
