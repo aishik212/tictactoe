@@ -29,17 +29,9 @@
             android:fontFamily="casual"
             android:gravity="center"
             android:text="player 1"
-            android:textColor="@android:color/holo_green_dark"
+            android:textColor="@color/secondaryDarkColor"
             android:textSize="22sp"
             android:textStyle="bold" />
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:background="@android:color/holo_green_dark" />
-
-        `
 
         <TextView
             android:id="@+id/playertwo"
@@ -50,9 +42,16 @@
             android:gravity="center"
             android:text="player 2"
             android:textAlignment="center"
-            android:textColor="@android:color/holo_green_dark"
+            android:textColor="@color/secondaryDarkColor"
             android:textSize="22sp"
             android:textStyle="bold" />
+
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@color/primaryDarkColor" />
 
     </LinearLayout>
 
@@ -75,10 +74,10 @@
 
 
         <View
-            android:layout_width="1dp"
+            android:layout_width="2dp"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:background="@android:color/holo_green_dark" />
+            android:background="@color/primaryDarkColor" />
 
         <TextView
             android:id="@+id/p2score"
@@ -105,40 +104,39 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="kzz" />
-
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@color/lineColor"></View>
 
         <ImageView
             android:id="@+id/tzo"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="kzo" />
-
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@color/lineColor"></View>
 
         <ImageView
             android:id="@+id/tzt"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="kzt" />
+
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="182" />
+
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="2" />
 
 
     </LinearLayout>
-
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/line_thickness"
-        android:background="@color/lineColor"></View>
 
 
     <LinearLayout
@@ -152,39 +150,41 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="koz" />
-
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@color/lineColor"></View>
 
         <ImageView
             android:id="@+id/too"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="koo" />
-
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@color/lineColor"></View>
 
         <ImageView
             android:id="@+id/tot"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="kot" />
+
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="0"
+            android:rotationX="0" />
+
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="182" />
 
 
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/line_thickness"
-        android:background="@color/lineColor"></View>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -197,35 +197,39 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="ktz" />
-
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@color/lineColor"></View>
 
         <ImageView
             android:id="@+id/tto"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="kto" />
-
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@color/lineColor"></View>
 
         <ImageView
             android:id="@+id/ttt"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:hapticFeedbackEnabled="false"
             android:onClick="ktt" />
+
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="183" />
+
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="4" />
 
 
     </LinearLayout>
-
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -233,31 +237,51 @@
         android:layout_height="0dp"
         android:layout_weight=".8"
         android:gravity="center"
-        android:weightSum="3">
+        android:weightSum="2">
 
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:fontFamily="monospace"
-            android:text="Game #"
-            android:textColor="@android:color/holo_green_dark" />
+            android:layout_weight="1"
+            android:fontFamily="casual"
+            android:gravity="center"
+            android:text="Total Matches"
+            android:textColor="@color/secondaryDarkColor"
+            app:autoSizeTextType="uniform" />
 
 
         <TextView
             android:id="@+id/gamenumber"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:layout_marginLeft="8dp"
             android:layout_marginStart="8dp"
-            android:fontFamily="sans-serif-smallcaps"
+            android:layout_marginLeft="8dp"
+            android:layout_weight="1"
+            android:fontFamily="casual"
+            android:gravity="center"
             android:text="1"
-            android:textColor="@android:color/holo_green_dark"
-            android:textSize="25sp" />
+            android:textColor="@color/secondaryDarkColor"
+            android:textSize="25sp"
+            app:autoSizeTextType="uniform" />
 
 
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/line_thickness"
+        android:background="@drawable/lineh"
+        android:rotation="180"
+        android:scaleY="1.5" />
+
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/line_thickness"
+        android:background="@drawable/lineh"
+        android:scaleY="1.25" />
 
 </LinearLayout>

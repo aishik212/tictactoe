@@ -1,10 +1,10 @@
 package simpleapps.tictactoe;
 
 import android.app.Dialog;
+import android.media.MediaPlayer;
 import android.os.Bundle;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import android.os.Vibrator;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -12,23 +12,24 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
 import java.util.Random;
 
 public class Afterstart extends AppCompatActivity {
 
+    static int[][] tracker = new int[3][3];
+    static int[][] buttonpressed = new int[3][3];
     boolean easy;
     boolean medium;
     boolean hard;
     boolean impossible;
     Random r = new Random();
-
     int flag = 0, ax = 10, zero = 1, sensorflag = 0, win = 0, i, game = 1, prevrow, prevcol;
     int summ = 0, ctrflag = 0, night = 0, resetchecker = 1, currentgamedonechecker = 0;
     int score1 = 0, score2 = 0, drawchecker = 0;
-    static int[][] tracker = new int[3][3];
     int[] sum = new int[8];
-    static int[][] buttonpressed = new int[3][3];
-
     boolean player1ax;
     boolean selectedsingleplayer;
 
@@ -36,6 +37,7 @@ public class Afterstart extends AppCompatActivity {
     TextView p2;
     CharSequence player1 = "Player 1";
     CharSequence player2 = "Player 2";
+    MediaPlayer mp;
 
 
     @Override
@@ -45,7 +47,7 @@ public class Afterstart extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_afterstart);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         CharSequence[] players = getIntent().getCharSequenceArrayExtra("playersnames");
@@ -57,6 +59,8 @@ public class Afterstart extends AppCompatActivity {
         hard = getIntent().getBooleanExtra("hard", false);
         impossible = getIntent().getBooleanExtra("impossible", false);
 
+        mp = MediaPlayer.create(this, R.raw.pencilsound);
+        mp.setVolume(0.2F, 0.2F);
 
         if (player1ax) {
             ax = 1;
@@ -71,15 +75,21 @@ public class Afterstart extends AppCompatActivity {
 
         p1.setText(player1);
         p2.setText(player2);
-
         Toast.makeText(this, "" + player1 + "\'s turn", Toast.LENGTH_SHORT).show();
-
     }
 
 
+    private void vib(int i, boolean makeSound) {
+        Vibrator myVib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
+        myVib.vibrate(i);
+        if (makeSound && mp != null) {
+            mp.start();
+        }
+    }
+
     public void kzz(View view) {
 
-
+        vib(60, true);
         if (win == 0 && buttonpressed[0][0] == 0) {
             if (flag % 2 == 0)
                 tracker[0][0] = ax;
@@ -96,6 +106,7 @@ public class Afterstart extends AppCompatActivity {
 
 
     public void kzo(View view) {
+        vib(60, true);
 
         if (win == 0 && buttonpressed[0][1] == 0) {
             if (flag % 2 == 0) tracker[0][1] = ax;
@@ -110,6 +121,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void kzt(View view) {
+        vib(60, true);
         if (win == 0 && buttonpressed[0][2] == 0) {
             if (flag % 2 == 0) tracker[0][2] = ax;
             else tracker[0][2] = zero;
@@ -123,6 +135,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void koz(View v) {
+        vib(60, true);
         if (win == 0 && buttonpressed[1][0] == 0) {
             if (flag % 2 == 0) tracker[1][0] = ax;
             else tracker[1][0] = zero;
@@ -137,6 +150,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void koo(View v) {
+        vib(60, true);
         if (win == 0 && buttonpressed[1][1] == 0) {
             if (flag % 2 == 0) tracker[1][1] = ax;
             else tracker[1][1] = zero;
@@ -149,6 +163,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void kot(View v) {
+        vib(60, true);
         if (win == 0 && buttonpressed[1][2] == 0) {
             if (flag % 2 == 0) tracker[1][2] = ax;
             else tracker[1][2] = zero;
@@ -162,6 +177,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void ktz(View v) {
+        vib(60, true);
         if (win == 0 && buttonpressed[2][0] == 0) {
             if (flag % 2 == 0) tracker[2][0] = ax;
             else tracker[2][0] = zero;
@@ -175,6 +191,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void kto(View v) {
+        vib(60, true);
         if (win == 0 && buttonpressed[2][1] == 0) {
             if (flag % 2 == 0) tracker[2][1] = ax;
             else tracker[2][1] = zero;
@@ -187,6 +204,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void ktt(View v) {
+        vib(60, true);
         if (win == 0 && buttonpressed[2][2] == 0) {
             if (flag % 2 == 0) tracker[2][2] = ax;
             else tracker[2][2] = zero;
@@ -201,8 +219,6 @@ public class Afterstart extends AppCompatActivity {
 
     public void cpuplay() {
         if ((selectedsingleplayer) && (win == 0)) {
-
-
             if (ifcpuwin()) ;
             else if (ifopowin()) ;
             else if (emptycentre()) ;
@@ -579,6 +595,7 @@ public class Afterstart extends AppCompatActivity {
 
 
     public void showDialog(String whoWon, String scoreWon, String whoLose, String scoreLose) {
+        vib(500, false);
 
         final Dialog dialog = new Dialog(Afterstart.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -635,6 +652,12 @@ public class Afterstart extends AppCompatActivity {
                     score1++;
                     TextView q1 = (TextView) findViewById(R.id.p1score);
                     q1.setText("" + score1);
+                    Log.d("texts", "winchecker: A PLAYER WON");
+                    if (selectedsingleplayer) {
+                        MediaPlayer winSound = MediaPlayer.create(this, R.raw.winsound);
+                        winSound.setVolume(0.4F, 0.4F);
+                        winSound.start();
+                    }
                     showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
 
                 }
@@ -642,6 +665,7 @@ public class Afterstart extends AppCompatActivity {
                     score2++;
                     TextView q1 = (TextView) findViewById(R.id.p2score);
                     q1.setText("" + score2);
+                    Log.d("texts", "winchecker: B");
                     showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
 
                 }
@@ -649,6 +673,7 @@ public class Afterstart extends AppCompatActivity {
                     score1++;
                     TextView q1 = (TextView) findViewById(R.id.p1score);
                     q1.setText("" + score1);
+                    Log.d("texts", "winchecker: C");
                     showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
 
                 }
@@ -656,6 +681,12 @@ public class Afterstart extends AppCompatActivity {
                     score2++;
                     TextView q1 = (TextView) findViewById(R.id.p2score);
                     q1.setText("" + score2);
+                    Log.d("texts", "winchecker: D CPU WON");
+                    if (selectedsingleplayer) {
+                        MediaPlayer winSound = MediaPlayer.create(this, R.raw.losesound);
+                        winSound.setVolume(0.4F, 0.4F);
+                        winSound.start();
+                    }
                     showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
 
                 }

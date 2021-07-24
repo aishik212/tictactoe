@@ -12,37 +12,21 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:fontFamily="casual"
-            android:gravity="center"
-            android:text="Tic Tac Toe"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textSize="50dp"
-            android:textStyle="bold" />
-
-
-        <EditText
-            android:id="@+id/playerone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Player 1 name"
-            android:imeActionLabel="NEXT"
-            android:imeOptions="actionNext"
-            android:inputType="textCapSentences|textPersonName"
-            android:textColor="@android:color/black" />
-         
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="horizontal"
-            android:padding="2dp"
+            android:padding="5dp"
             android:weightSum="3">
 
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Choose Symbol" />
 
             <CheckBox
                 android:id="@+id/player1x"
@@ -67,24 +51,20 @@
 
         </LinearLayout>
 
-
-        <EditText
-            android:id="@+id/playertwo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:hint="Player 2 Name"
-            android:imeActionLabel="DONE"
-            android:imeOptions="actionDone"
-            android:inputType="textCapSentences|textPersonName" />
-         
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:padding="5dp"
             android:weightSum="3">
 
+
+            <TextView
+                android:id="@+id/textView6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Choose Symbol" />
 
             <CheckBox
                 android:id="@+id/player2x"
@@ -108,23 +88,38 @@
 
         </LinearLayout>
 
+
+        <EditText
+            android:id="@+id/playerone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Player 1 name"
+            android:imeActionLabel="NEXT"
+            android:imeOptions="actionNext"
+            android:inputType="textCapSentences|textPersonName"
+            android:textColor="@android:color/black" />
+         
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:gravity="center"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:weightSum="2">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="5dp">
 
                 <CheckBox
                     android:id="@+id/splayer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:fontFamily="casual"
                     android:text="Single player" />
 
@@ -132,21 +127,82 @@
                     android:id="@+id/tplayer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:fontFamily="casual"
                     android:text="Two player" />
 
+                <TextView
+                    android:id="@+id/textView7"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="Choose Opponent" />
+
             </LinearLayout>
 
-            <Spinner
-                android:id="@+id/difficulty"
-                android:layout_width="0dp"
-                android:layout_height="35dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="difficulty">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="5dp">
 
-            </Spinner>
+                <Spinner
+                    android:id="@+id/difficulty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="difficulty">
+
+                </Spinner>
+
+                <TextView
+                    android:id="@+id/textView8"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="Choose  Difficulty" />
+
+            </LinearLayout>
 
         </LinearLayout>
+
+
+        <EditText
+            android:id="@+id/playertwo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:hint="Player 2 Name"
+            android:imeActionLabel="DONE"
+            android:imeOptions="actionDone"
+            android:inputType="textCapSentences|textPersonName" />
+         
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="casual"
+            android:gravity="center"
+            android:text="Tic Tac Toe"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="casual"
+            android:gravity="center"
+            android:text="Kata Kuti"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="50dp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 

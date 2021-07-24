@@ -1,21 +1,21 @@
 package simpleapps.tictactoe;
 
 import android.content.Intent;
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import android.view.View;
-import android.widget.ArrayAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,152 +27,13 @@ public class MainActivity extends AppCompatActivity {
     public CharSequence player2 = "Player 2";
 
     public CharSequence cloneplayer2;
+    public CheckBox p1x, p1o, p2x, p2o, singleplayer, twoplayer;
     boolean player1ax = true;
     boolean selectedSinglePlayer;
     boolean easy = true;
     boolean medium = false;
     boolean hard = false;
     boolean impossible = false;
-    public CheckBox p1x, p1o, p2x, p2o, singleplayer, twoplayer;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-
-
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-//apply the animation ( fade In ) to your LAyout
-
-        if (getIntent().getBooleanExtra("EXIT", false)) {
-            finish();
-        }
-
-        addItemToDifficultySpinner();
-
-        plyr1 = (EditText) findViewById(R.id.playerone);
-        plyr2 = (EditText) findViewById(R.id.playertwo);
-
-
-        p1x = (CheckBox) findViewById(R.id.player1x);
-        p1o = (CheckBox) findViewById(R.id.player1o);
-        p2x = (CheckBox) findViewById(R.id.player2x);
-        p2o = (CheckBox) findViewById(R.id.player2o);
-        singleplayer = (CheckBox) findViewById(R.id.splayer);
-        twoplayer = (CheckBox) findViewById(R.id.tplayer);
-
-        p1x.setOnClickListener(checkboxClickListener);
-        p1o.setOnClickListener(checkboxClickListener);
-        p2x.setOnClickListener(checkboxClickListener);
-        p2o.setOnClickListener(checkboxClickListener);
-        singleplayer.setOnClickListener(checkboxClickListener);
-        twoplayer.setOnClickListener(checkboxClickListener);
-
-        difficulty.setEnabled(false);
-
-
-        p1x.setChecked(true);
-        p2o.setChecked(true);
-        twoplayer.setChecked(true);
-
-
-        plyr1.addTextChangedListener(new TextWatcher() {                               /*this code take player1's name characterwise i.e it takes one character at a time and
-                                                                                         saved to string variable player1*/
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                player1 = s.toString();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
-
-
-        plyr2.addTextChangedListener(new TextWatcher() {
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                player2 = s.toString();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-
-    }
-
-
-    public void addItemToDifficultySpinner() {
-        difficulty = (Spinner) findViewById(R.id.difficulty);
-
-        List<String> list = new ArrayList<String>();
-        list.add("Easy");
-        list.add("Medium");
-        list.add("Hard");
-        list.add("Impossible");
-
-        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, list);
-        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        difficulty.setAdapter(dataAdapter);
-
-
-        difficulty.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String temp = parent.getItemAtPosition(position).toString();
-
-                switch (temp) {
-                    case "Easy":
-                        easy = true;
-                        medium = false;
-                        hard = false;
-                        impossible = false;
-                        break;
-                    case "Medium":
-                        easy = false;
-                        medium = true;
-                        hard = false;
-                        impossible = false;
-                        break;
-                    case "Hard":
-                        easy = false;
-                        medium = false;
-                        hard = true;
-                        impossible = false;
-                        break;
-                    case "Impossible":
-                        easy = false;
-                        medium = false;
-                        hard = false;
-                        impossible = true;
-                        break;
-                }
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                medium = true;
-                easy = false;
-                hard = false;
-                impossible = false;
-            }
-        });
-    }
-
-
     View.OnClickListener checkboxClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -274,6 +135,141 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+//apply the animation ( fade In ) to your LAyout
+
+        if (getIntent().getBooleanExtra("EXIT", false)) {
+            finish();
+        }
+
+        addItemToDifficultySpinner();
+
+        plyr1 = (EditText) findViewById(R.id.playerone);
+        plyr2 = (EditText) findViewById(R.id.playertwo);
+
+
+        p1x = (CheckBox) findViewById(R.id.player1x);
+        p1o = (CheckBox) findViewById(R.id.player1o);
+        p2x = (CheckBox) findViewById(R.id.player2x);
+        p2o = (CheckBox) findViewById(R.id.player2o);
+        singleplayer = (CheckBox) findViewById(R.id.splayer);
+        twoplayer = (CheckBox) findViewById(R.id.tplayer);
+
+        p1x.setOnClickListener(checkboxClickListener);
+        p1o.setOnClickListener(checkboxClickListener);
+        p2x.setOnClickListener(checkboxClickListener);
+        p2o.setOnClickListener(checkboxClickListener);
+        singleplayer.setOnClickListener(checkboxClickListener);
+        twoplayer.setOnClickListener(checkboxClickListener);
+
+        difficulty.setEnabled(false);
+
+
+        p1x.setChecked(true);
+        p2o.setChecked(true);
+        twoplayer.setChecked(true);
+
+
+        plyr1.addTextChangedListener(new TextWatcher() {                               /*this code take player1's name characterwise i.e it takes one character at a time and
+                                                                                         saved to string variable player1*/
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                player1 = s.toString();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+
+        plyr2.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                player2 = s.toString();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+    }
+
+    public void addItemToDifficultySpinner() {
+        difficulty = (Spinner) findViewById(R.id.difficulty);
+
+        List<String> list = new ArrayList<String>();
+        list.add("Easy");
+        list.add("Medium");
+        list.add("Hard");
+        list.add("Impossible");
+
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, list);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        difficulty.setAdapter(dataAdapter);
+
+
+        difficulty.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String temp = parent.getItemAtPosition(position).toString();
+
+                switch (temp) {
+                    case "Easy":
+                        easy = true;
+                        medium = false;
+                        hard = false;
+                        impossible = false;
+                        break;
+                    case "Medium":
+                        easy = false;
+                        medium = true;
+                        hard = false;
+                        impossible = false;
+                        break;
+                    case "Hard":
+                        easy = false;
+                        medium = false;
+                        hard = true;
+                        impossible = false;
+                        break;
+                    case "Impossible":
+                        easy = false;
+                        medium = false;
+                        hard = false;
+                        impossible = true;
+                        break;
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                medium = true;
+                easy = false;
+                hard = false;
+                impossible = false;
+            }
+        });
+    }
 
     public void startgame(View view) {
 
