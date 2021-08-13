@@ -13,6 +13,15 @@
         android:background="@android:color/white"
         android:orientation="vertical">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text="Are you sure you want to Exit?"
+            android:textColor="@android:color/black"
+            android:textSize="22sp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="80dp"
@@ -45,15 +54,6 @@
                 android:textColor="@android:color/white" />
 
         </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="4dp"
-            android:text="Are you sure you want to Exit?"
-            android:textColor="@android:color/black"
-            android:textSize="22sp" />
 
         <!--<LinearLayout-->
         <!--android:layout_width="match_parent"-->

@@ -12,14 +12,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Afterstart extends AppCompatActivity {
+public class AfterstartOnline extends AppCompatActivity {
 
     static int[][] tracker = new int[3][3];
     static int[][] buttonpressed = new int[3][3];
@@ -43,7 +49,10 @@ public class Afterstart extends AppCompatActivity {
     CharSequence player2 = "Player 2";
     MediaPlayer mp;
     String gameId;
-
+    boolean startsWith;
+    Boolean dbUpdate = false;
+    DatabaseReference gameChild;
+    Dialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +60,6 @@ public class Afterstart extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_afterstart);
-
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         q1 = findViewById(R.id.u00);
@@ -84,22 +92,105 @@ public class Afterstart extends AppCompatActivity {
         mp = MediaPlayer.create(this, R.raw.pencilsound);
         mp.setVolume(0.2F, 0.2F);
 
-        if (player1ax) {
-            ax = 1;
-            zero = 10;
-        }
-
-
         player1 = players[0];
         player2 = players[1];
-        p1 = (TextView) findViewById(R.id.playerone);
-        p2 = (TextView) findViewById(R.id.playertwo);
+
+        startsWith = gameId.startsWith(Utils.getMAuth().getUid());
+        if (gameId != null && startsWith) {
+            flag = 0;
+            enableAll();
+            ax = 1;
+            zero = 10;
+        } else {
+            flag = 1;
+            disableAll();
+            ax = 10;
+            zero = 1;
+        }
+        Log.d("texts", "onCreate: firstflag " + flag);
+        Log.d("texts", "onCreate: A p1 " + player1 + " p2 " + player2);
+        Log.d("texts", "onCreate: B " + ax + " " + zero);
+        p1 = findViewById(R.id.playerone);
+        p2 = findViewById(R.id.playertwo);
 
         p1.setText(player1);
         p2.setText(player2);
-        Toast.makeText(this, "" + player1 + "\'s turn", Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
+        DatabaseReference game = Utils.getDatabase(this).child("game");
+        if (gameId != null) {
+            Log.d("texts", "onCreate: is Player 1 " + player1ax);
+            gameChild = game.child(gameId);
+            gameChild.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.getValue() != null) {
+                        if (snapshot.getValue().equals("reset")) {
+                            dismissDialog(dialog);
+                            Toast.makeText(AfterstartOnline.this, "User Left the Game", Toast.LENGTH_SHORT).show();
+                            doreset();
+                            finish();
+                        } else if (snapshot.getValue().equals("again")) {
+                            dismissDialog(dialog);
+                            playmore();
+                        } else {
+                            Log.d("texts", "onDataChange: " + snapshot.getValue());
+                            for (DataSnapshot s : snapshot.getChildren()) {
+                                dbUpdate = true;
+                                String key = s.getKey();
+                                if (key != null) {
+                                    switch (key) {
+                                        case "00":
+                                            u00(q1);
+                                            break;
+                                        case "01":
+                                            u01(q2);
+                                            break;
+                                        case "02":
+                                            u02(q2);
+                                            break;
+                                        case "10":
+                                            m00(q2);
+                                            break;
+                                        case "11":
+                                            m01(q2);
+                                            break;
+                                        case "12":
+                                            m02(q2);
+                                            break;
+                                        case "20":
+                                            l00(q2);
+                                            break;
+                                        case "21":
+                                            l01(q2);
+                                            break;
+                                        case "22":
+                                            l02(q2);
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+        }
     }
 
+    private void dismissDialog(Dialog dialog) {
+        if (dialog != null) {
+            try {
+                dialog.dismiss();
+            } catch (Exception e) {
+
+            }
+        }
+    }
 
     private void vib(int i, boolean makeSound) {
         Vibrator myVib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
@@ -110,7 +201,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void u00(View view) {
-
+        updateOnDB("00");
         vib(60, true);
         if (win == 0 && buttonpressed[0][0] == 0) {
             if (flag % 2 == 0)
@@ -126,9 +217,15 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
+    private void updateOnDB(String s) {
+        if (!dbUpdate) {
+            gameChild.child(s).setValue(Utils.getMAuth().getCurrentUser().getUid());
+        }
+        dbUpdate = false;
+    }
 
     public void u01(View view) {
-
+        updateOnDB("01");
 
         vib(60, true);
 
@@ -145,7 +242,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void u02(View view) {
-
+        updateOnDB("02");
         vib(60, true);
         if (win == 0 && buttonpressed[0][2] == 0) {
             if (flag % 2 == 0) tracker[0][2] = ax;
@@ -160,7 +257,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void m00(View v) {
-
+        updateOnDB("10");
         vib(60, true);
         if (win == 0 && buttonpressed[1][0] == 0) {
             if (flag % 2 == 0) tracker[1][0] = ax;
@@ -176,7 +273,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void m01(View v) {
-
+        updateOnDB("11");
         vib(60, true);
         if (win == 0 && buttonpressed[1][1] == 0) {
             if (flag % 2 == 0) tracker[1][1] = ax;
@@ -190,7 +287,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void m02(View v) {
-
+        updateOnDB("12");
         vib(60, true);
         if (win == 0 && buttonpressed[1][2] == 0) {
             if (flag % 2 == 0) tracker[1][2] = ax;
@@ -205,7 +302,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void l00(View v) {
-
+        updateOnDB("20");
         vib(60, true);
         if (win == 0 && buttonpressed[2][0] == 0) {
             if (flag % 2 == 0) tracker[2][0] = ax;
@@ -220,7 +317,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void l01(View v) {
-
+        updateOnDB("21");
         vib(60, true);
         if (win == 0 && buttonpressed[2][1] == 0) {
             if (flag % 2 == 0) tracker[2][1] = ax;
@@ -234,7 +331,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
     public void l02(View v) {
-
+        updateOnDB("22");
         vib(60, true);
         if (win == 0 && buttonpressed[2][2] == 0) {
             if (flag % 2 == 0) tracker[2][2] = ax;
@@ -340,7 +437,6 @@ public class Afterstart extends AppCompatActivity {
         }
         return false;
     }
-
 
     public boolean ifopowin() {
         if ((!easy) || (!medium)) {
@@ -575,7 +671,6 @@ public class Afterstart extends AppCompatActivity {
         return r.nextInt(3);
     }
 
-
     public void printBoard() {
 
 
@@ -612,13 +707,46 @@ public class Afterstart extends AppCompatActivity {
         if (tracker[2][2] == 10) q9.setImageResource(R.drawable.oo);
 
         resetchecker++;
+        checkCurrentUser();
+
     }
 
+    private void checkCurrentUser() {
+        if (gameId.startsWith(Utils.getMAuth().getUid())) {
+            if (flag == 0) {
+                disableAll();
+            } else if (flag % 2 == 0) {
+                disableAll();
+            } else {
+                enableAll();
+            }
+        } else {
+            if (flag == 1) {
+                enableAll();
+            } else if (flag % 2 == 1) {
+                enableAll();
+            } else {
+                disableAll();
+            }
+        }
+    }
+
+    private void disableAll() {
+        for (ImageView imageView : checkerlist) {
+            imageView.setEnabled(false);
+        }
+    }
+
+    private void enableAll() {
+        for (ImageView imageView : checkerlist) {
+            imageView.setEnabled(true);
+        }
+    }
 
     public void showDialog(String whoWon, String scoreWon, String whoLose, String scoreLose) {
         vib(500, false);
 
-        final Dialog dialog = new Dialog(Afterstart.this);
+        dialog = new Dialog(AfterstartOnline.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_layout);
 //        TextView playerOneScore = dialog.findViewById(R.id.player_one_score);
@@ -633,19 +761,19 @@ public class Afterstart extends AppCompatActivity {
 
         Button resetButton = dialog.findViewById(R.id.reset_button);
         Button playAgainButton = dialog.findViewById(R.id.play_again_button);
-
+        resetButton.setText("End Game");
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dialog.dismiss();
-                doreset();
+                dismissDialog(dialog);
+                showExitDialog();
             }
         });
 
         playAgainButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dialog.dismiss();
+                dismissDialog(dialog);
                 playmore();
             }
         });
@@ -670,53 +798,76 @@ public class Afterstart extends AppCompatActivity {
             if (sum[i] == 3 || sum[i] == 30) {
                 win++;
                 if ((sum[i] == 3) && (ax == 1)) {
-                    score1++;
-                    TextView q1 = findViewById(R.id.p1score);
-                    q1.setText("" + score1);
                     Log.d("texts", "winchecker: A PLAYER WON");
+                    Log.d("texts", "winchecker: " + startsWith + " " + gameId);
                     if (selectedsingleplayer) {
                         MediaPlayer winSound = MediaPlayer.create(this, R.raw.winsound);
                         winSound.setVolume(0.4F, 0.4F);
                         winSound.start();
                     }
+                    score1++;
                     showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
+                    TextView q1 = findViewById(R.id.p1score);
+                    q1.setText("" + score1);
 
                 }
                 if ((sum[i] == 3) && (zero == 1)) {
-                    score2++;
-                    TextView q1 = findViewById(R.id.p2score);
-                    q1.setText("" + score2);
                     Log.d("texts", "winchecker: B");
-                    showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
+                    Log.d("texts", "winchecker: " + startsWith + " " + gameId);
+                    if (startsWith) {
+                        score2++;
+                        showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
+                        TextView q1 = findViewById(R.id.p2score);
+                        q1.setText("" + score2);
+                    } else {
+                        score1++;
+                        showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
+                        TextView q1 = findViewById(R.id.p1score);
+                        q1.setText("" + score1);
+                    }
 
                 }
                 if ((sum[i] == 30) && (ax == 10)) {
-                    score1++;
-                    TextView q1 = findViewById(R.id.p1score);
-                    q1.setText("" + score1);
                     Log.d("texts", "winchecker: C");
-                    showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
+                    Log.d("texts", "winchecker: " + startsWith + " " + gameId);
+                    if (startsWith) {
+                        score1++;
+                        showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
+                        TextView q1 = findViewById(R.id.p1score);
+                        q1.setText("" + score1);
+                    } else {
+                        score2++;
+                        showDialog("You won!", "" + score2, "" + player1, "" + score1);
+                        TextView q1 = findViewById(R.id.p2score);
+                        q1.setText("" + score2);
+                    }
 
                 }
                 if ((sum[i] == 30) && (zero == 10)) {
-                    score2++;
-                    TextView q1 = findViewById(R.id.p2score);
-                    q1.setText("" + score2);
                     Log.d("texts", "winchecker: D CPU WON");
+                    Log.d("texts", "winchecker: " + startsWith + " " + gameId);
                     if (selectedsingleplayer) {
                         MediaPlayer winSound = MediaPlayer.create(this, R.raw.losesound);
                         winSound.setVolume(0.4F, 0.4F);
                         winSound.start();
                     }
-                    showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
-
+                    if (startsWith) {
+                        score2++;
+                        showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
+                        TextView q1 = findViewById(R.id.p2score);
+                        q1.setText("" + score2);
+                    } else {
+                        score1++;
+                        showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
+                        TextView q1 = findViewById(R.id.p1score);
+                        q1.setText("" + score1);
+                    }
                 }
 
             }
 
         if ((ctrflag == 9) && (win == 0)) {
             showDialog("This is a draw !", "" + score1, "" + player2, "" + score2);
-
             drawchecker++;
         }
 
@@ -768,14 +919,27 @@ public class Afterstart extends AppCompatActivity {
                 Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
             else
                 Toast.makeText(this, "" + player2 + "'s turn", Toast.LENGTH_SHORT).show();
+
             win = 0;
             summ = 0;
             ctrflag = 0;
             flag = (game + 1) % 2;
+            if (gameId != null && startsWith) {
+                flag = 0;
+                enableAll();
+                ax = 1;
+                zero = 10;
+            } else {
+                flag = 1;
+                disableAll();
+                ax = 10;
+                zero = 1;
+            }
             currentgamedonechecker = 0;
 
             if (selectedsingleplayer && (game % 2 == 0))
                 cpuplay();
+            gameChild.setValue("again");
         }
     }
 
@@ -824,8 +988,18 @@ public class Afterstart extends AppCompatActivity {
         score1 = 0;
         score2 = 0;
         game = 1;
-        flag = 0;
         currentgamedonechecker = 0;
+        if (gameId != null && startsWith) {
+            flag = 0;
+            enableAll();
+            ax = 1;
+            zero = 10;
+        } else {
+            flag = 1;
+            disableAll();
+            ax = 10;
+            zero = 1;
+        }
         TextView qqq = findViewById(R.id.p1score);
         qqq.setText("" + score1);
         TextView qqqq = findViewById(R.id.p2score);
@@ -833,7 +1007,7 @@ public class Afterstart extends AppCompatActivity {
 
         Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
 
-
+        gameChild.setValue("reset");
     }
 
 
@@ -845,7 +1019,7 @@ public class Afterstart extends AppCompatActivity {
 //    }
 
     private void showExitDialog() {
-        final Dialog dialog = new Dialog(Afterstart.this);
+        final Dialog dialog = new Dialog(AfterstartOnline.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_layout_exit);
         dialog.setCancelable(false);
@@ -866,7 +1040,7 @@ public class Afterstart extends AppCompatActivity {
         dismiss.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dialog.dismiss();
+                dismissDialog(dialog);
             }
         });
     }

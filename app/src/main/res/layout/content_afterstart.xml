@@ -33,6 +33,12 @@
             android:textSize="22sp"
             android:textStyle="bold" />
 
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@color/primaryDarkColor" />
+
         <TextView
             android:id="@+id/playertwo"
             android:layout_width="0dp"
@@ -46,12 +52,6 @@
             android:textSize="22sp"
             android:textStyle="bold" />
 
-
-        <View
-            android:layout_width="2dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:background="@color/primaryDarkColor" />
 
     </LinearLayout>
 
@@ -100,40 +100,40 @@
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/tzz"
+            android:id="@+id/u00"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="kzz" />
+            android:onClick="u00" />
 
         <ImageView
-            android:id="@+id/tzo"
+            android:id="@+id/u01"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="kzo" />
+            android:onClick="u01" />
 
         <ImageView
-            android:id="@+id/tzt"
+            android:id="@+id/u02"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="kzt" />
-
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@drawable/linev"
-            android:rotation="182" />
+            android:onClick="u02" />
 
         <View
             android:layout_width="@dimen/line_thickness"
             android:layout_height="match_parent"
             android:background="@drawable/linev"
             android:rotation="2" />
+
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="182" />
 
 
     </LinearLayout>
@@ -146,28 +146,34 @@
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/toz"
+            android:id="@+id/m00"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="koz" />
+            android:onClick="m00" />
 
         <ImageView
-            android:id="@+id/too"
+            android:id="@+id/m01"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="koo" />
+            android:onClick="m01" />
 
         <ImageView
-            android:id="@+id/tot"
+            android:id="@+id/m02"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="kot" />
+            android:onClick="m02" />
+
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="182" />
 
         <View
             android:layout_width="@dimen/line_thickness"
@@ -176,15 +182,8 @@
             android:rotation="0"
             android:rotationX="0" />
 
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@drawable/linev"
-            android:rotation="182" />
-
 
     </LinearLayout>
-
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -193,34 +192,28 @@
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/ttz"
+            android:id="@+id/b00"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="ktz" />
+            android:onClick="l00" />
 
         <ImageView
-            android:id="@+id/tto"
+            android:id="@+id/b01"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="kto" />
+            android:onClick="l01" />
 
         <ImageView
-            android:id="@+id/ttt"
+            android:id="@+id/b02"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:hapticFeedbackEnabled="false"
-            android:onClick="ktt" />
-
-        <View
-            android:layout_width="@dimen/line_thickness"
-            android:layout_height="match_parent"
-            android:background="@drawable/linev"
-            android:rotation="183" />
+            android:onClick="l02" />
 
         <View
             android:layout_width="@dimen/line_thickness"
@@ -228,8 +221,28 @@
             android:background="@drawable/linev"
             android:rotation="4" />
 
+        <View
+            android:layout_width="@dimen/line_thickness"
+            android:layout_height="match_parent"
+            android:background="@drawable/linev"
+            android:rotation="183" />
+
 
     </LinearLayout>
+
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/line_thickness"
+        android:background="@drawable/lineh"
+        android:rotation="180"
+        android:scaleY="1.5" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/line_thickness"
+        android:background="@drawable/lineh"
+        android:scaleY="1.25" />
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -270,18 +283,5 @@
 
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/line_thickness"
-        android:background="@drawable/lineh"
-        android:rotation="180"
-        android:scaleY="1.5" />
-
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/line_thickness"
-        android:background="@drawable/lineh"
-        android:scaleY="1.25" />
 
 </LinearLayout>
