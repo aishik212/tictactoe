@@ -31,6 +31,10 @@ import simpleapps.tictactoe.Utils.login
 import simpleapps.tictactoe.Utils.mAuth
 import java.util.*
 
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
+
+
 class MainActivity : Activity(), View.OnClickListener {
     var plyr1: EditText? = null
     var plyr2: EditText? = null
@@ -147,6 +151,21 @@ class MainActivity : Activity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         //apply the animation ( fade In ) to your LAyout
+        val requestConfiguration = MobileAds.getRequestConfiguration()
+            .toBuilder()
+            .setTagForChildDirectedTreatment(RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+            .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
+            .build()
+        MobileAds.setRequestConfiguration(requestConfiguration)
+        MobileAds.initialize(
+            this
+        ) {
+            Utils.AdUtils.showBannerAd(
+                this,
+                getString(R.string.admobBasicBannerId),
+                findViewById(R.id.adFrame)
+            )
+        }
         if (intent.getBooleanExtra("EXIT", false)) {
             finish()
         }
@@ -408,6 +427,7 @@ class MainActivity : Activity(), View.OnClickListener {
                 })
         }
     }
+
 
     private fun sanitize_user_db(
         database: DatabaseReference,

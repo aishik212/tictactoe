@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--    ADMOB START -->
+    <string name="admobAppId">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admobBasicBannerId">ca-app-pub-3940256099942544/6300978111</string>
+    <!--    ADMOB END -->
+</resources>

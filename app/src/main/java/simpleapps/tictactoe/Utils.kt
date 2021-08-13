@@ -2,6 +2,15 @@ package simpleapps.tictactoe
 
 import android.app.Activity
 import android.content.Context
+import android.util.DisplayMetrics
+import android.util.Log
+import android.view.View
+import android.view.View.VISIBLE
+import android.view.WindowManager
+import android.widget.FrameLayout
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -58,8 +67,38 @@ object Utils {
 
     object AdUtils {
         @JvmStatic
-        fun showBannerAd() {
+        fun showBannerAd(activity: Activity, adId: String, view: FrameLayout) {
+            Log.d("texts", "showBannerAd: $adId")
+            val adView = AdView(activity)
+            adView.adUnitId = adId
+            adView.adSize = getAdSize(activity.windowManager, view, activity)
+            val adRequest = AdRequest
+                .Builder()
+                .build()
+            adView.loadAd(adRequest)
+            view.removeAllViews()
+            view.addView(adView)
+            view.visibility = VISIBLE
+        }
 
+        fun getAdSize(
+            windowManager: WindowManager,
+            ad_view_container: FrameLayout,
+            activity: Activity
+        ): AdSize {
+            val display = windowManager.defaultDisplay
+            val outMetrics = DisplayMetrics()
+            display.getMetrics(outMetrics)
+
+            val density = outMetrics.density
+
+            var adWidthPixels = ad_view_container.width.toFloat()
+            if (adWidthPixels == 0f) {
+                adWidthPixels = outMetrics.widthPixels.toFloat()
+            }
+
+            val adWidth = (adWidthPixels / density).toInt()
+            return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, adWidth)
         }
     }
 }

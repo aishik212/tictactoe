@@ -6,4 +6,10 @@
     <string name="about">About</string>
     <string name="exit">Exit</string>
     <string name="title_activity_afterstart">Kata Kuti - Tic Tac Toe</string>
+
+
+    <!--    ADMOB START -->
+    <string name="admobAppId">ca-app-pub-5925062597723127~9998237077</string>
+    <string name="admobBasicBannerId">ca-app-pub-5925062597723127/3373118971</string>
+    <!--    ADMOB END -->
 </resources>
