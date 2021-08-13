@@ -380,7 +380,6 @@ class MainActivity : Activity(), View.OnClickListener {
                             matchData["gameid"] = gameId
                             matchData["p1"] = "${mAuth?.currentUser?.email}(p1)" ?: "Anonymous(p1)"
                             matchData["p2"] = "$name(p2)"
-                            Log.d("texts", "onDataChange: " + matchData)
                             database.child("matches")
                                 .child(key).setValue(matchData)
                             database.child("matches")

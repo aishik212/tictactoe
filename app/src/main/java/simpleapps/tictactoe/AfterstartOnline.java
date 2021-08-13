@@ -3,6 +3,7 @@ package simpleapps.tictactoe;
 import android.app.Dialog;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
@@ -43,8 +44,7 @@ public class AfterstartOnline extends AppCompatActivity {
 
     ImageView q1, q2, q3, q4, q5, q6, q7, q8, q9;
     List<ImageView> checkerlist = new ArrayList<>();
-    TextView p1;
-    TextView p2;
+    TextView p1, p2, turn_tv;
     CharSequence player1 = "Player 1";
     CharSequence player2 = "Player 2";
     MediaPlayer mp;
@@ -55,9 +55,22 @@ public class AfterstartOnline extends AppCompatActivity {
     Dialog dialog;
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        destroyTimer();
+        sanitize_game_db(Utils.getDatabase(getApplicationContext()), Utils.getMAuth().getUid());
+    }
+
+    private void sanitize_game_db(
+            DatabaseReference database,
+            String uid
+    ) {
+        database.child("matches").child(uid).removeValue();
+        database.child("game").child(gameId).removeValue();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_afterstart);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -71,6 +84,7 @@ public class AfterstartOnline extends AppCompatActivity {
         q7 = findViewById(R.id.b00);
         q8 = findViewById(R.id.b01);
         q9 = findViewById(R.id.b02);
+        turn_tv = findViewById(R.id.turn_tv);
         checkerlist.add(q1);
         checkerlist.add(q2);
         checkerlist.add(q3);
@@ -107,9 +121,7 @@ public class AfterstartOnline extends AppCompatActivity {
             ax = 10;
             zero = 1;
         }
-        Log.d("texts", "onCreate: firstflag " + flag);
-        Log.d("texts", "onCreate: A p1 " + player1 + " p2 " + player2);
-        Log.d("texts", "onCreate: B " + ax + " " + zero);
+
         p1 = findViewById(R.id.playerone);
         p2 = findViewById(R.id.playertwo);
 
@@ -119,7 +131,6 @@ public class AfterstartOnline extends AppCompatActivity {
         Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
         DatabaseReference game = Utils.getDatabase(this).child("game");
         if (gameId != null) {
-            Log.d("texts", "onCreate: is Player 1 " + player1ax);
             gameChild = game.child(gameId);
             gameChild.addValueEventListener(new ValueEventListener() {
                 @Override
@@ -134,40 +145,11 @@ public class AfterstartOnline extends AppCompatActivity {
                             dismissDialog(dialog);
                             playmore();
                         } else {
-                            Log.d("texts", "onDataChange: " + snapshot.getValue());
                             for (DataSnapshot s : snapshot.getChildren()) {
                                 dbUpdate = true;
                                 String key = s.getKey();
                                 if (key != null) {
-                                    switch (key) {
-                                        case "00":
-                                            u00(q1);
-                                            break;
-                                        case "01":
-                                            u01(q2);
-                                            break;
-                                        case "02":
-                                            u02(q2);
-                                            break;
-                                        case "10":
-                                            m00(q2);
-                                            break;
-                                        case "11":
-                                            m01(q2);
-                                            break;
-                                        case "12":
-                                            m02(q2);
-                                            break;
-                                        case "20":
-                                            l00(q2);
-                                            break;
-                                        case "21":
-                                            l01(q2);
-                                            break;
-                                        case "22":
-                                            l02(q2);
-                                            break;
-                                    }
+                                    pany(key);
                                 }
                             }
                         }
@@ -200,31 +182,59 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
-    public void u00(View view) {
-        updateOnDB("00");
-        vib(60, true);
-        if (win == 0 && buttonpressed[0][0] == 0) {
-            if (flag % 2 == 0)
-                tracker[0][0] = ax;
-            else
-                tracker[0][0] = zero;
-
-            printBoard();
-            winchecker();
-            cpuplay();
-            flag++;
-            buttonpressed[0][0]++;
-        }
-    }
-
     private void updateOnDB(String s) {
+        skippable = false;
         if (!dbUpdate) {
             gameChild.child(s).setValue(Utils.getMAuth().getCurrentUser().getUid());
         }
         dbUpdate = false;
     }
 
-    public void u01(View view) {
+    public void pany(String location) {
+        updateOnDB(location);
+        vib(60, true);
+        int xval = Integer.parseInt(location.split("")[0]);
+        int yval = Integer.parseInt(location.split("")[1]);
+
+        if (win == 0 && buttonpressed[xval][yval] == 0) {
+            if (flag % 2 == 0)
+                tracker[xval][yval] = ax;
+            else
+                tracker[xval][yval] = zero;
+
+            printBoard();
+            winchecker();
+            cpuplay();
+            flag++;
+            if (xval == 0) {
+                buttonpressed[xval][yval]++;
+            } else {
+                ++buttonpressed[xval][yval];
+            }
+        }
+    }
+
+    public void p00(View view) {
+        updateOnDB("00");
+        vib(60, true);
+        int xval = 0;
+        int yval = 0;
+        if (win == 0 && buttonpressed[xval][yval] == 0) {
+            if (flag % 2 == 0)
+                tracker[xval][yval] = ax;
+            else
+                tracker[xval][yval] = zero;
+
+            printBoard();
+            winchecker();
+            cpuplay();
+            flag++;
+            buttonpressed[xval][yval]++;
+        }
+    }
+
+
+    public void p01(View view) {
         updateOnDB("01");
 
         vib(60, true);
@@ -241,7 +251,7 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
-    public void u02(View view) {
+    public void p02(View view) {
         updateOnDB("02");
         vib(60, true);
         if (win == 0 && buttonpressed[0][2] == 0) {
@@ -256,7 +266,7 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
-    public void m00(View v) {
+    public void p10(View v) {
         updateOnDB("10");
         vib(60, true);
         if (win == 0 && buttonpressed[1][0] == 0) {
@@ -272,7 +282,7 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
-    public void m01(View v) {
+    public void p11(View v) {
         updateOnDB("11");
         vib(60, true);
         if (win == 0 && buttonpressed[1][1] == 0) {
@@ -286,7 +296,7 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
-    public void m02(View v) {
+    public void p12(View v) {
         updateOnDB("12");
         vib(60, true);
         if (win == 0 && buttonpressed[1][2] == 0) {
@@ -301,7 +311,7 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
-    public void l00(View v) {
+    public void p20(View v) {
         updateOnDB("20");
         vib(60, true);
         if (win == 0 && buttonpressed[2][0] == 0) {
@@ -316,7 +326,7 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
-    public void l01(View v) {
+    public void p21(View v) {
         updateOnDB("21");
         vib(60, true);
         if (win == 0 && buttonpressed[2][1] == 0) {
@@ -330,7 +340,7 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
-    public void l02(View v) {
+    public void p22(View v) {
         updateOnDB("22");
         vib(60, true);
         if (win == 0 && buttonpressed[2][2] == 0) {
@@ -642,7 +652,6 @@ public class AfterstartOnline extends AppCompatActivity {
     }
 
     public void emptyany() {
-
         if (ctrflag == 0)
             while (true) {
                 int x = rand();
@@ -711,6 +720,18 @@ public class AfterstartOnline extends AppCompatActivity {
 
     }
 
+    private void clickRandom() {
+        for (int i = 0; i < tracker.length; i++) {
+            for (int j = 0; j < tracker[0].length; j++) {
+                if (tracker[i][j] == 0) {
+                    Log.d("texts", "clickRandom: " + i + "" + j);
+                    pany(i + "" + j);
+                    return;
+                }
+            }
+        }
+    }
+
     private void checkCurrentUser() {
         if (gameId.startsWith(Utils.getMAuth().getUid())) {
             if (flag == 0) {
@@ -731,19 +752,58 @@ public class AfterstartOnline extends AppCompatActivity {
         }
     }
 
+    boolean skippable = true;
+    CountDownTimer ctd = null;
+
+    private void skipAfter10Seconds() {
+        if (ctd != null) {
+            ctd.cancel();
+        }
+        ctd = new CountDownTimer(10 * 1000, 1000) {
+            @Override
+            public void onTick(long l) {
+                runOnUiThread(() -> {
+                    Log.d("texts", "onTick: Ticking " + l);
+                    if (skippable) {
+                        turn_tv.setText("Your Turn " + (l) / 1000 + " Seconds Left");
+                    } else {
+                        turn_tv.setText("Opponent's Turn " + (l) / 1000 + " Seconds Left");
+                    }
+                });
+            }
+
+            @Override
+            public void onFinish() {
+                Log.d("texts", "onFinish: " + skippable);
+                if (skippable) {
+                    ctd = null;
+                    clickRandom();
+                }
+            }
+        };
+        ctd.start();
+    }
+
     private void disableAll() {
+        skippable = false;
+        skipAfter10Seconds();
+        turn_tv.setText("Opponents Turn");
         for (ImageView imageView : checkerlist) {
             imageView.setEnabled(false);
         }
     }
 
     private void enableAll() {
+        skippable = true;
+        skipAfter10Seconds();
+        turn_tv.setText("Your Turn");
         for (ImageView imageView : checkerlist) {
             imageView.setEnabled(true);
         }
     }
 
     public void showDialog(String whoWon, String scoreWon, String whoLose, String scoreLose) {
+        destroyTimer();
         vib(500, false);
 
         dialog = new Dialog(AfterstartOnline.this);
@@ -777,6 +837,17 @@ public class AfterstartOnline extends AppCompatActivity {
                 playmore();
             }
         });
+    }
+
+    private void destroyTimer() {
+        try {
+            if (ctd != null) {
+                skippable = false;
+                ctd.cancel();
+            }
+        } catch (Exception e) {
+
+        }
     }
 
     public void winchecker() {

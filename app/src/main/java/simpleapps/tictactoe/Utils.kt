@@ -1,5 +1,6 @@
 package simpleapps.tictactoe
 
+import android.app.Activity
 import android.content.Context
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -52,5 +53,13 @@ object Utils {
         }
         return FirebaseDatabase.getInstance("https://simpleapps-6a092-default-rtdb.asia-southeast1.firebasedatabase.app")
             .getReference(replace)
+    }
+
+
+    object AdUtils {
+        @JvmStatic
+        fun showBannerAd() {
+
+        }
     }
 }
