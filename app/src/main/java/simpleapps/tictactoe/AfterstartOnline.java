@@ -23,6 +23,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -132,9 +133,11 @@ public class AfterstartOnline extends AppCompatActivity {
         DatabaseReference game = Utils.getDatabase(this).child("game");
         if (gameId != null) {
             gameChild = game.child(gameId);
+            Log.d("texts", "onCreate: " + gameId);
             gameChild.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Log.d("texts", "onDataChange: " + snapshot.getValue());
                     if (snapshot.getValue() != null) {
                         if (snapshot.getValue().equals("reset")) {
                             dismissDialog(dialog);
@@ -145,10 +148,11 @@ public class AfterstartOnline extends AppCompatActivity {
                             dismissDialog(dialog);
                             playmore();
                         } else {
+                            Log.d("texts", "onDataChange: " + snapshot);
                             for (DataSnapshot s : snapshot.getChildren()) {
                                 dbUpdate = true;
                                 String key = s.getKey();
-                                if (key != null) {
+                                if (key != null && key.length() == 2) {
                                     pany(key);
                                 }
                             }
@@ -191,11 +195,20 @@ public class AfterstartOnline extends AppCompatActivity {
     }
 
     public void pany(String location) {
+        location = location.trim();
+        String[] split = location.trim().split("", 0);
         updateOnDB(location);
         vib(60, true);
-        int xval = Integer.parseInt(location.split("")[0]);
-        int yval = Integer.parseInt(location.split("")[1]);
-
+        /**
+         * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
+         * so that it doesnt outputs wrong value
+         */
+        int patch = 0;
+        if (location.length() < split.length) {
+            patch = split.length - location.length();
+        }
+        int xval = Integer.parseInt(split[patch]);
+        int yval = Integer.parseInt(split[1 + patch]);
         if (win == 0 && buttonpressed[xval][yval] == 0) {
             if (flag % 2 == 0)
                 tracker[xval][yval] = ax;
@@ -763,7 +776,6 @@ public class AfterstartOnline extends AppCompatActivity {
             @Override
             public void onTick(long l) {
                 runOnUiThread(() -> {
-                    Log.d("texts", "onTick: Ticking " + l);
                     if (skippable) {
                         turn_tv.setText("Your Turn " + (l) / 1000 + " Seconds Left");
                     } else {

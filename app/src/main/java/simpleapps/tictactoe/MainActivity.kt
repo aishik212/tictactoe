@@ -33,6 +33,12 @@ import java.util.*
 
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.ktx.get
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+import org.json.JSONObject
+import simpleapps.tictactoe.Utils.adResult
 
 
 class MainActivity : Activity(), View.OnClickListener {
@@ -151,21 +157,8 @@ class MainActivity : Activity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         //apply the animation ( fade In ) to your LAyout
-        val requestConfiguration = MobileAds.getRequestConfiguration()
-            .toBuilder()
-            .setTagForChildDirectedTreatment(RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
-            .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
-            .build()
-        MobileAds.setRequestConfiguration(requestConfiguration)
-        MobileAds.initialize(
-            this
-        ) {
-            Utils.AdUtils.showBannerAd(
-                this,
-                getString(R.string.admobBasicBannerId),
-                findViewById(R.id.adFrame)
-            )
-        }
+        initializeAds()
+        initializeRemoteConfig()
         if (intent.getBooleanExtra("EXIT", false)) {
             finish()
         }
@@ -220,6 +213,38 @@ class MainActivity : Activity(), View.OnClickListener {
             }
         } else {
             online_play_btn.text = "Login to Play Online"
+        }
+    }
+
+    private fun initializeAds() {
+        val requestConfiguration = MobileAds.getRequestConfiguration()
+            .toBuilder()
+            .setTagForChildDirectedTreatment(RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+            .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
+            .build()
+        MobileAds.setRequestConfiguration(requestConfiguration)
+        MobileAds.initialize(
+            this
+        ) {
+            Utils.AdUtils.showBannerAd(
+                this,
+                getString(R.string.admobBasicBannerId),
+                findViewById(R.id.adFrame)
+            )
+        }
+    }
+
+    private fun initializeRemoteConfig() {
+        val remoteConfig = Firebase.remoteConfig
+        val configSettings = remoteConfigSettings {
+            minimumFetchIntervalInSeconds = 3600
+        }
+        remoteConfig.setConfigSettingsAsync(configSettings)
+        remoteConfig.fetchAndActivate().addOnCompleteListener(this) { task ->
+            if (task.isSuccessful) {
+                adResult = JSONObject(remoteConfig.getString("showAds"))
+                Log.d("texts", "initializeRemoteConfig: $adResult")
+            }
         }
     }
 

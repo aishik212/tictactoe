@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
+import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -17,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import org.jetbrains.annotations.Nullable
+import org.json.JSONObject
 
 
 object Utils {
@@ -64,24 +66,32 @@ object Utils {
             .getReference(replace)
     }
 
+    @JvmStatic
+    var adResult: JSONObject? = null
+
 
     object AdUtils {
         @JvmStatic
         fun showBannerAd(activity: Activity, adId: String, view: FrameLayout) {
-            Log.d("texts", "showBannerAd: $adId")
-            val adView = AdView(activity)
-            adView.adUnitId = adId
-            adView.adSize = getAdSize(activity.windowManager, view, activity)
-            val adRequest = AdRequest
-                .Builder()
-                .build()
-            adView.loadAd(adRequest)
-            view.removeAllViews()
-            view.addView(adView)
-            view.visibility = VISIBLE
+            if(adResult != null && adResult!!.getBoolean("banner"))
+            {
+
+                val adView = AdView(activity)
+                adView.adUnitId = adId
+                adView.adSize = getAdSize(activity.windowManager, view, activity)
+                val adRequest = AdRequest
+                    .Builder()
+                    .build()
+                adView.loadAd(adRequest)
+                view.removeAllViews()
+                view.addView(adView)
+                view.visibility = VISIBLE
+            }else{
+                view.visibility = GONE
+            }
         }
 
-        fun getAdSize(
+        private fun getAdSize(
             windowManager: WindowManager,
             ad_view_container: FrameLayout,
             activity: Activity

@@ -109,7 +109,7 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void u00(View view) {
+    public void p00(View view) {
 
         vib(60, true);
         if (win == 0 && buttonpressed[0][0] == 0) {
@@ -127,7 +127,7 @@ public class Afterstart extends AppCompatActivity {
     }
 
 
-    public void u01(View view) {
+    public void p01(View view) {
 
 
         vib(60, true);
@@ -144,7 +144,7 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void u02(View view) {
+    public void p02(View view) {
 
         vib(60, true);
         if (win == 0 && buttonpressed[0][2] == 0) {
@@ -159,7 +159,7 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void m00(View v) {
+    public void p10(View v) {
 
         vib(60, true);
         if (win == 0 && buttonpressed[1][0] == 0) {
@@ -175,7 +175,7 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void m01(View v) {
+    public void p11(View v) {
 
         vib(60, true);
         if (win == 0 && buttonpressed[1][1] == 0) {
@@ -189,7 +189,7 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void m02(View v) {
+    public void p12(View v) {
 
         vib(60, true);
         if (win == 0 && buttonpressed[1][2] == 0) {
@@ -204,7 +204,7 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void l00(View v) {
+    public void p20(View v) {
 
         vib(60, true);
         if (win == 0 && buttonpressed[2][0] == 0) {
@@ -219,7 +219,7 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void l01(View v) {
+    public void p21(View v) {
 
         vib(60, true);
         if (win == 0 && buttonpressed[2][1] == 0) {
@@ -233,7 +233,7 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void l02(View v) {
+    public void p22(View v) {
 
         vib(60, true);
         if (win == 0 && buttonpressed[2][2] == 0) {
