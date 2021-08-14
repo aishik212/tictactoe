@@ -23,7 +23,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -166,6 +165,10 @@ public class AfterstartOnline extends AppCompatActivity {
                 }
             });
         }
+        Utils.AdUtils.showBannerAd(
+                this,
+                getString(R.string.admobBasicBannerId)
+        );
     }
 
     private void dismissDialog(Dialog dialog) {
@@ -825,7 +828,11 @@ public class AfterstartOnline extends AppCompatActivity {
 //        TextView playerTwoScore = dialog.findViewById(R.id.player_two_score);
         TextView titleText = dialog.findViewById(R.id.title_text);
         dialog.setCancelable(false);
-        dialog.show();
+        try {
+            dialog.show();
+        } catch (Exception e) {
+            Log.d("texts", "showDialog: " + e.getLocalizedMessage());
+        }
 
         titleText.setText(whoWon);
 //        playerOneScore.setText(whoWon+" Score -> "+scoreWon);

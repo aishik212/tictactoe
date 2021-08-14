@@ -3,8 +3,6 @@ package simpleapps.tictactoe
 import android.app.Activity
 import android.content.Context
 import android.util.DisplayMetrics
-import android.util.Log
-import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.WindowManager
@@ -72,23 +70,26 @@ object Utils {
 
     object AdUtils {
         @JvmStatic
-        fun showBannerAd(activity: Activity, adId: String, view: FrameLayout) {
-            if(adResult != null && adResult!!.getBoolean("banner"))
-            {
-
-                val adView = AdView(activity)
-                adView.adUnitId = adId
-                adView.adSize = getAdSize(activity.windowManager, view, activity)
-                val adRequest = AdRequest
-                    .Builder()
-                    .build()
-                adView.loadAd(adRequest)
-                view.removeAllViews()
-                view.addView(adView)
-                view.visibility = VISIBLE
-            }else{
-                view.visibility = GONE
+        fun showBannerAd(activity: Activity, adId: String) {
+            try {
+                val view = activity.findViewById<FrameLayout>(R.id.bannerAdFrame)
+                if (adResult != null && adResult!!.getBoolean("banner")) {
+                    val adView = AdView(activity)
+                    adView.adUnitId = adId
+                    adView.adSize = getAdSize(activity.windowManager, view, activity)
+                    val adRequest = AdRequest
+                        .Builder()
+                        .build()
+                    adView.loadAd(adRequest)
+                    view.removeAllViews()
+                    view.addView(adView)
+                    view.visibility = VISIBLE
+                } else {
+                    view.visibility = GONE
+                }
+            } catch (e: Exception) {
             }
+
         }
 
         private fun getAdSize(

@@ -2,4 +2,12 @@
 Aishik Kirtaniya
     14-08-2021
         13:00
-            Fixed String Split issue
+            versionCode 2
+            versionName "2_TTT"
+                Fixed String Split issue
+        21:47
+            versionCode 2
+            versionName "2_TTT"
+                Loading Screen Added for Game Start
+                Added Bots when no user will be found
+                added on the game screen too

@@ -3,6 +3,7 @@ package simpleapps.tictactoe
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -12,6 +13,8 @@ import android.view.View.VISIBLE
 import android.view.inputmethod.EditorInfo
 import android.widget.*
 import com.bumptech.glide.Glide
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
@@ -23,22 +26,18 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import de.hdodenhof.circleimageview.CircleImageView
+import org.json.JSONObject
 import simpleapps.tictactoe.Utils.G_CODE
 import simpleapps.tictactoe.Utils.LoginMethod
 import simpleapps.tictactoe.Utils.TAG
+import simpleapps.tictactoe.Utils.adResult
 import simpleapps.tictactoe.Utils.login
 import simpleapps.tictactoe.Utils.mAuth
 import java.util.*
-
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.remoteconfig.ktx.get
-import com.google.firebase.remoteconfig.ktx.remoteConfig
-import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
-import org.json.JSONObject
-import simpleapps.tictactoe.Utils.adResult
 
 
 class MainActivity : Activity(), View.OnClickListener {
@@ -149,9 +148,11 @@ class MainActivity : Activity(), View.OnClickListener {
     }
     lateinit var login_view: View
     lateinit var loggedInView: View
+    lateinit var searchIncludeLayout: View
     lateinit var loggedInTv: TextView
     lateinit var loggedInImv: CircleImageView
     lateinit var online_play_btn: Button
+    lateinit var cancel_game_btn: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -168,6 +169,9 @@ class MainActivity : Activity(), View.OnClickListener {
         loggedInTv = findViewById(R.id.loggedin_tv)
         loggedInImv = findViewById(R.id.loggedin_imv)
         online_play_btn = findViewById(R.id.startOnline)
+        searchIncludeLayout = findViewById(R.id.search_include_layout)
+        cancel_game_btn = findViewById(R.id.cancel_game_btn)
+        cancel_game_btn.setOnClickListener(this)
         plyr1 = findViewById<View>(R.id.playerone) as EditText
         plyr2 = findViewById<View>(R.id.playertwo) as EditText
         p1x = findViewById<View>(R.id.player1x) as CheckBox
@@ -186,6 +190,11 @@ class MainActivity : Activity(), View.OnClickListener {
         p1x!!.isChecked = true
         p2o!!.isChecked = true
         twoplayer!!.isChecked = true
+        mAuth = FirebaseAuth.getInstance()
+        if (mAuth != null) {
+            database = Utils.getDatabase(this@MainActivity)
+            uid = mAuth?.uid.toString()
+        }
         plyr1!!.addTextChangedListener(object : TextWatcher {
             /*this code take player1's name characterwise i.e it takes one character at a time and
                                                                                          saved to string variable player1*/
@@ -204,7 +213,6 @@ class MainActivity : Activity(), View.OnClickListener {
 
             override fun afterTextChanged(s: Editable) {}
         })
-        mAuth = FirebaseAuth.getInstance()
         if (checkLogin()) {
             if (mAuth != null) {
                 updateUI(mAuth!!.currentUser, true)
@@ -228,10 +236,15 @@ class MainActivity : Activity(), View.OnClickListener {
         ) {
             Utils.AdUtils.showBannerAd(
                 this,
-                getString(R.string.admobBasicBannerId),
-                findViewById(R.id.adFrame)
+                getString(R.string.admobBasicBannerId)
             )
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        sanitize_user_db(database, uid)
+        removeWaitListener()
     }
 
     private fun initializeRemoteConfig() {
@@ -243,7 +256,7 @@ class MainActivity : Activity(), View.OnClickListener {
         remoteConfig.fetchAndActivate().addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
                 adResult = JSONObject(remoteConfig.getString("showAds"))
-                Log.d("texts", "initializeRemoteConfig: $adResult")
+                initializeAds()
             }
         }
     }
@@ -326,15 +339,48 @@ class MainActivity : Activity(), View.OnClickListener {
         startActivity(i)
     }
 
+
+    fun startRandomCPUgame() {
+        hideLoader()
+        sanitize_user_db(database, uid)
+        val i = Intent(this, Afterstart::class.java)
+        easy = false
+        medium = false
+        hard = false
+        impossible = false
+        when ((Math.random() * 4).toInt()) {
+            0 -> easy = true
+            1 -> medium = true
+            2 -> hard = true
+            3 -> impossible = true
+            else -> medium = true
+        }
+        if (!selectedSinglePlayer) {
+            if (player2.isEmpty()) {
+                player2 = "player 2"
+            }
+        }
+        if (player1.isEmpty()) {
+            player1 = "player 1"
+        }
+
+        val players = arrayOf(mAuth?.currentUser?.email ?: "You", "Other Player")
+        i.putExtra("easy", easy)
+        i.putExtra("medium", medium)
+        i.putExtra("hard", hard)
+        i.putExtra("impossible", impossible)
+        i.putExtra("playersnames", players)
+        i.putExtra("player1ax", true)
+        i.putExtra("selectedsingleplayer", true)
+        startActivity(i)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        Log.d("texts", "onActivityResult: $resultCode $requestCode")
         if (G_CODE == requestCode) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
-                // Google Sign In was successful, authenticate with Firebase
                 val account = task.getResult(ApiException::class.java)
-                Log.d("texts", "onActivityResult: login Success " + account.id)
                 firebaseAuthWithGoogle(account.idToken)
             } catch (e: ApiException) {
                 Log.d(
@@ -351,7 +397,6 @@ class MainActivity : Activity(), View.OnClickListener {
         mAuth!!.signInWithCredential(credential)
             .addOnCompleteListener(this) { task: Task<AuthResult?> ->
                 if (task.isSuccessful) {
-                    Log.d(TAG, "signInWithCredential:success")
                     val user = mAuth!!.currentUser;
                     updateUI(user, true);
                 } else {
@@ -393,6 +438,10 @@ class MainActivity : Activity(), View.OnClickListener {
                         login_view.visibility = VISIBLE
                     }
                 }
+                R.id.cancel_game_btn -> {
+                    hideLoader()
+                    sanitize_user_db(database, uid)
+                }
             }
         }
     }
@@ -402,55 +451,95 @@ class MainActivity : Activity(), View.OnClickListener {
         return mAuth != null && mAuth!!.currentUser != null
     }
 
+    lateinit var uid: String
+    lateinit var database: DatabaseReference
+    private lateinit var listener: ValueEventListener
+
     private fun searchUser() {
         if (mAuth != null) {
-            val database = Utils.getDatabase(this@MainActivity)
-            Log.d("texts", "searchUser: " + database.ref)
-            Log.d("texts", "searchUser: a")
-            val uid = mAuth?.uid.toString()
+            uid = (mAuth?.currentUser?.uid) + ""
             sanitize_user_db(database, uid)
+            showLoader()
+            listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.childrenCount > 0) {
+                        val key = snapshot.children.first().key.toString()
+                        val name = snapshot.children.first().child("name").value.toString()
+                        database.child("waiting")
+                            .child(key).removeValue()
+                        val gameId = uid + key
+                        database.child("game").child(gameId).removeValue()
+                        val matchData = hashMapOf<String, String>()
+                        matchData["gameid"] = gameId
+                        matchData["p1"] = "${mAuth?.currentUser?.email}(p1)" ?: "Anonymous(p1)"
+                        matchData["p2"] = "$name(p2)"
+                        database.child("matches")
+                            .child(key).setValue(matchData)
+                        database.child("matches")
+                            .child(uid).setValue(matchData)
+                        removeWaitListener()
+                        checkForMatches()
+                    } else {
+                        checkForMatches()
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Creating a Match",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        database.child("waiting")
+                            .child(mAuth?.currentUser?.uid + "")
+                            .child("name").setValue(
+                                mAuth?.currentUser?.email
+                                    ?: "Anonymous"
+                            )
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d("texts", "onCancelled: " + error.details)
+                }
+            }
             database.child("waiting")
-                .addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        if (snapshot.childrenCount > 0) {
-                            val key = snapshot.children.first().key.toString()
-                            val name = snapshot.children.first().child("name").value.toString()
-                            database.child("waiting")
-                                .child(key).removeValue()
-                            val gameId = uid + key
-                            database.child("game").child(gameId).removeValue()
-
-                            var matchData = hashMapOf<String, String>()
-                            matchData["gameid"] = gameId
-                            matchData["p1"] = "${mAuth?.currentUser?.email}(p1)" ?: "Anonymous(p1)"
-                            matchData["p2"] = "$name(p2)"
-                            database.child("matches")
-                                .child(key).setValue(matchData)
-                            database.child("matches")
-                                .child(uid).setValue(matchData)
-                            database.removeEventListener(this)
-                            checkForMatches()
-                        } else {
-                            checkForMatches()
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Please Wait for 15 Seconds, Waiting for other online players",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            database.child("waiting")
-                                .child(mAuth?.currentUser?.uid + "")
-                                .child("name").setValue(
-                                    mAuth?.currentUser?.email
-                                        ?: "Anonymous"
-                                )
-                        }
-                    }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        Log.d("texts", "onCancelled: " + error.details)
-                    }
-                })
+                .addListenerForSingleValueEvent(listener)
         }
+    }
+
+    private fun showLoader() {
+        searchIncludeLayout.visibility = VISIBLE
+        startLoader()
+    }
+
+    var ctdRandom: CountDownTimer? = null
+    private fun startLoader() {
+        ctdRandom = object : CountDownTimer(15000, 1000) {
+            override fun onTick(p0: Long) {
+                val l = p0 / 1000
+                Log.d("texts", "onTick: $p0 $l")
+                if (l < 1L) {
+                    ctdRandom?.cancel()
+                    startRandomCPUgame()
+                }
+            }
+
+            override fun onFinish() {
+
+            }
+
+        }
+        ctdRandom?.start()
+    }
+
+    private fun removeWaitListener() {
+        try {
+            database.child("waiting").removeEventListener(listener)
+        } catch (e: Exception) {
+            Log.d("texts", "removeWaitListener: " + e.localizedMessage)
+        }
+
+    }
+
+    private fun hideLoader() {
+        searchIncludeLayout.visibility = GONE
     }
 
 
@@ -458,8 +547,12 @@ class MainActivity : Activity(), View.OnClickListener {
         database: DatabaseReference,
         uid: String
     ) {
-        database.child("waiting").child(uid).removeValue()
-        database.child("matches").child(uid).removeValue()
+        try {
+            database.child("waiting").child(uid).removeValue()
+            database.child("matches").child(uid).removeValue()
+        } catch (e: Exception) {
+
+        }
     }
 
     private fun checkForMatches() {
@@ -468,6 +561,8 @@ class MainActivity : Activity(), View.OnClickListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.value != null) {
                     child.removeEventListener(this)
+                    hideLoader()
+                    ctdRandom?.cancel()
                     val gameID = snapshot.child("gameid").value
                     val p1 = snapshot.child("p1").value.toString()
                     val p2 = snapshot.child("p2").value.toString()

@@ -51,7 +51,6 @@ public class Afterstart extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_afterstart);
-
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         q1 = findViewById(R.id.u00);
@@ -98,6 +97,10 @@ public class Afterstart extends AppCompatActivity {
         p1.setText(player1);
         p2.setText(player2);
         Toast.makeText(this, "" + player1 + "\'s turn", Toast.LENGTH_SHORT).show();
+        Utils.AdUtils.showBannerAd(
+                this,
+                getString(R.string.admobBasicBannerId)
+        );
     }
 
 
