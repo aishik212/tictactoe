@@ -11,5 +11,6 @@
     <!--    ADMOB START -->
     <string name="admobAppId">ca-app-pub-5925062597723127~9998237077</string>
     <string name="admobBasicBannerId">ca-app-pub-5925062597723127/3373118971</string>
+    <string name="tcmessage">By Using this App you accept to our terms and Conditions and Privacy Policy. Click Here to Read our Terms and Conditions and Privacy Policy</string>
     <!--    ADMOB END -->
 </resources>

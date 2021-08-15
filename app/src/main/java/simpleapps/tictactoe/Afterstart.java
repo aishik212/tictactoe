@@ -676,7 +676,6 @@ public class Afterstart extends AppCompatActivity {
                     score1++;
                     TextView q1 = findViewById(R.id.p1score);
                     q1.setText("" + score1);
-                    Log.d("texts", "winchecker: A PLAYER WON");
                     if (selectedsingleplayer) {
                         MediaPlayer winSound = MediaPlayer.create(this, R.raw.winsound);
                         winSound.setVolume(0.4F, 0.4F);

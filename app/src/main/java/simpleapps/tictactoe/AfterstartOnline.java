@@ -85,6 +85,7 @@ public class AfterstartOnline extends AppCompatActivity {
         q8 = findViewById(R.id.b01);
         q9 = findViewById(R.id.b02);
         turn_tv = findViewById(R.id.turn_tv);
+        turn_tv.setVisibility(View.VISIBLE);
         checkerlist.add(q1);
         checkerlist.add(q2);
         checkerlist.add(q3);
@@ -136,7 +137,6 @@ public class AfterstartOnline extends AppCompatActivity {
             gameChild.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    Log.d("texts", "onDataChange: " + snapshot.getValue());
                     if (snapshot.getValue() != null) {
                         if (snapshot.getValue().equals("reset")) {
                             dismissDialog(dialog);
@@ -147,7 +147,6 @@ public class AfterstartOnline extends AppCompatActivity {
                             dismissDialog(dialog);
                             playmore();
                         } else {
-                            Log.d("texts", "onDataChange: " + snapshot);
                             for (DataSnapshot s : snapshot.getChildren()) {
                                 dbUpdate = true;
                                 String key = s.getKey();
@@ -161,7 +160,7 @@ public class AfterstartOnline extends AppCompatActivity {
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-
+                    Log.d("texts", "onCancelled: " + error.getDetails());
                 }
             });
         }
@@ -1013,17 +1012,23 @@ public class AfterstartOnline extends AppCompatActivity {
             win = 0;
             summ = 0;
             ctrflag = 0;
-            flag = (game + 1) % 2;
+            Log.d("texts", "playmore: game - " + game + ", flag - " + flag + " " + ((game + 2) % 2));
             if (gameId != null && startsWith) {
-                flag = 0;
-                enableAll();
-                ax = 1;
-                zero = 10;
+                if (((game + 2) % 2) == 0) {
+                    flag = 1;
+                    disableAll();
+                } else {
+                    flag = 0;
+                    enableAll();
+                }
             } else {
-                flag = 1;
-                disableAll();
-                ax = 10;
-                zero = 1;
+                if (((game + 2) % 2) == 0) {
+                    flag = 0;
+                    enableAll();
+                } else {
+                    flag = 1;
+                    disableAll();
+                }
             }
             currentgamedonechecker = 0;
 

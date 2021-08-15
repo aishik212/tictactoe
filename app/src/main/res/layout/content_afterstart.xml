@@ -248,7 +248,8 @@
         android:text="Your Turn"
         android:textColor="@color/primaryLightColor"
         android:textSize="22sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -290,7 +291,7 @@
         android:id="@+id/bannerAdFrame"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

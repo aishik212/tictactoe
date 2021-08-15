@@ -1,7 +1,10 @@
 package simpleapps.tictactoe
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.Intent.*
+import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.text.Editable
@@ -14,7 +17,6 @@ import android.view.inputmethod.EditorInfo
 import android.widget.*
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
@@ -227,8 +229,6 @@ class MainActivity : Activity(), View.OnClickListener {
     private fun initializeAds() {
         val requestConfiguration = MobileAds.getRequestConfiguration()
             .toBuilder()
-            .setTagForChildDirectedTreatment(RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
-            .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
             .build()
         MobileAds.setRequestConfiguration(requestConfiguration)
         MobileAds.initialize(
@@ -442,6 +442,17 @@ class MainActivity : Activity(), View.OnClickListener {
                     hideLoader()
                     sanitize_user_db(database, uid)
                 }
+                R.id.tc_tv -> {
+                    try {
+                        val intent = Intent(ACTION_VIEW)
+                        intent.data = Uri.parse("https://simpleapps-6a092.web.app/KK/pp.html")
+                        intent.addFlags(FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                    } catch (e: ActivityNotFoundException) {
+                        Toast.makeText(applicationContext, "No Browser Found", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
             }
         }
     }
@@ -515,7 +526,7 @@ class MainActivity : Activity(), View.OnClickListener {
             override fun onTick(p0: Long) {
                 val l = p0 / 1000
                 Log.d("texts", "onTick: $p0 $l")
-                if (l < 1L) {
+                if (l < 2L) {
                     ctdRandom?.cancel()
                     startRandomCPUgame()
                 }
@@ -539,6 +550,7 @@ class MainActivity : Activity(), View.OnClickListener {
     }
 
     private fun hideLoader() {
+        ctdRandom?.cancel()
         searchIncludeLayout.visibility = GONE
     }
 
@@ -548,10 +560,13 @@ class MainActivity : Activity(), View.OnClickListener {
         uid: String
     ) {
         try {
-            database.child("waiting").child(uid).removeValue()
+            Log.d("texts", "sanitize_user_db: " + database.child("waiting").child(uid).ref)
+            database.child("waiting").child(uid).removeValue().addOnFailureListener {
+                Log.d("texts", "sanitize_user_db: " + it.localizedMessage)
+            }
             database.child("matches").child(uid).removeValue()
         } catch (e: Exception) {
-
+            Log.d("texts", "sanitize_user_db: " + e.localizedMessage)
         }
     }
 
