@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "464223468798",
+    "firebase_url": "https://simpleapps-6a092-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "simpleapps-6a092",
     "storage_bucket": "simpleapps-6a092.appspot.com"
   },
@@ -87,6 +88,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "464223468798-8tkt6ootgtdc4up6q0eje3mtr2l8uu02.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "simpleapps.tictactoe",
+            "certificate_hash": "42f1e58151c6f1eb3d0d1459b55f03281800ccab"
+          }
+        },
         {
           "client_id": "464223468798-dakoni13f6tl134ulpkklcd42agbbgk3.apps.googleusercontent.com",
           "client_type": 1,

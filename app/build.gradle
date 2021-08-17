@@ -19,8 +19,8 @@ android {
         applicationId "simpleapps.tictactoe"
         minSdkVersion 21
         targetSdkVersion 31
-        versionCode 3
-        versionName "3_TTT"
+        versionCode 4
+        versionName "4_TTT"
         signingConfig signingConfigs.tttkey
         multiDexEnabled true
     }
