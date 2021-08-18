@@ -20,14 +20,12 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
@@ -161,6 +159,7 @@ class MainActivity : Activity(), View.OnClickListener {
         setContentView(R.layout.activity_main)
         //apply the animation ( fade In ) to your LAyout
         initializeAds()
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         initializeRemoteConfig()
         if (intent.getBooleanExtra("EXIT", false)) {
             finish()
@@ -226,6 +225,12 @@ class MainActivity : Activity(), View.OnClickListener {
         }
     }
 
+    private fun logGameEvent(gameType: String) {
+        val bundle = Bundle()
+        bundle.putString("game_type", gameType)
+        FirebaseAnalytics.getInstance(applicationContext).logEvent("game_type", bundle)
+    }
+
     private fun initializeAds() {
         val requestConfiguration = MobileAds.getRequestConfiguration()
             .toBuilder()
@@ -270,48 +275,56 @@ class MainActivity : Activity(), View.OnClickListener {
         list.add("Impossible")
         val dataAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, list)
         dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        difficulty!!.adapter = dataAdapter
-        difficulty!!.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View,
-                position: Int,
-                id: Long
-            ) {
-                val temp = parent.getItemAtPosition(position).toString()
-                when (temp) {
-                    "Easy" -> {
-                        easy = true
-                        medium = false
-                        hard = false
-                        impossible = false
+        val difficulty1 = difficulty
+        if (difficulty1 != null) {
+            difficulty1.adapter = dataAdapter
+            difficulty1.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>,
+                    view: View,
+                    position: Int,
+                    id: Long
+                ) {
+                    try {
+                        val temp = parent.getItemAtPosition(position).toString()
+                        when (temp) {
+                            "Easy" -> {
+                                easy = true
+                                medium = false
+                                hard = false
+                                impossible = false
+                            }
+                            "Medium" -> {
+                                easy = false
+                                medium = true
+                                hard = false
+                                impossible = false
+                            }
+                            "Hard" -> {
+                                easy = false
+                                medium = false
+                                hard = true
+                                impossible = false
+                            }
+                            "Impossible" -> {
+                                easy = false
+                                medium = false
+                                hard = false
+                                impossible = true
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.d("texts", "onItemSelected: " + e.localizedMessage)
                     }
-                    "Medium" -> {
-                        easy = false
-                        medium = true
-                        hard = false
-                        impossible = false
-                    }
-                    "Hard" -> {
-                        easy = false
-                        medium = false
-                        hard = true
-                        impossible = false
-                    }
-                    "Impossible" -> {
-                        easy = false
-                        medium = false
-                        hard = false
-                        impossible = true
-                    }
-                }
-            }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                medium = true
-                easy = false
-                hard = false
-                impossible = false
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    medium = true
+                    easy = false
+                    hard = false
+                    impossible = false
+                }
             }
         }
     }
@@ -336,6 +349,11 @@ class MainActivity : Activity(), View.OnClickListener {
         i.putExtra("playersnames", players)
         i.putExtra("player1ax", player1ax)
         i.putExtra("selectedsingleplayer", selectedSinglePlayer)
+        if (selectedSinglePlayer) {
+            logGameEvent("offline_single")
+        } else {
+            logGameEvent("offline_double")
+        }
         startActivity(i)
     }
 
@@ -372,6 +390,7 @@ class MainActivity : Activity(), View.OnClickListener {
         i.putExtra("playersnames", players)
         i.putExtra("player1ax", true)
         i.putExtra("selectedsingleplayer", true)
+        logGameEvent("online_bot")
         startActivity(i)
     }
 
@@ -470,39 +489,40 @@ class MainActivity : Activity(), View.OnClickListener {
         if (mAuth != null) {
             uid = (mAuth?.currentUser?.uid) + ""
             sanitize_user_db(database, uid)
-            showLoader()
             listener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    val displayName = mAuth?.currentUser?.displayName ?: "Anonymous"
+                    val waitingRef = database.child("waiting")
                     if (snapshot.childrenCount > 0) {
-                        val key = snapshot.children.first().key.toString()
-                        val name = snapshot.children.first().child("name").value.toString()
-                        database.child("waiting")
-                            .child(key).removeValue()
+                        val first = snapshot.children.first()
+                        val key = first.key.toString()
+                        val name = first.child("name").value.toString()
                         val gameId = uid + key
-                        database.child("game").child(gameId).removeValue()
+                        val gameRef = database.child("game")
+                        val matchRef = database.child("matches")
+                        waitingRef.child(key).removeValue()
+                        gameRef.child(gameId).removeValue()
                         val matchData = hashMapOf<String, String>()
                         matchData["gameid"] = gameId
-                        matchData["p1"] = "${mAuth?.currentUser?.email}(p1)" ?: "Anonymous(p1)"
+                        matchData["p1"] = "$displayName(p1)"
                         matchData["p2"] = "$name(p2)"
-                        database.child("matches")
-                            .child(key).setValue(matchData)
-                        database.child("matches")
-                            .child(uid).setValue(matchData)
+                        matchRef.child(key).setValue(matchData).addOnSuccessListener {
+                            matchRef.child(uid).setValue(matchData).addOnSuccessListener {
+                                checkForMatches()
+                                showLoader()
+                            }
+                        }
                         removeWaitListener()
-                        checkForMatches()
                     } else {
-                        checkForMatches()
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Creating a Match",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        database.child("waiting")
-                            .child(mAuth?.currentUser?.uid + "")
+                        val uid1 = mAuth?.currentUser?.uid
+                        waitingRef
+                            .child(uid1 + "")
                             .child("name").setValue(
-                                mAuth?.currentUser?.email
-                                    ?: "Anonymous"
-                            )
+                                displayName
+                            ).addOnSuccessListener {
+                                checkForMatches()
+                                showLoader()
+                            }
                     }
                 }
 
@@ -599,6 +619,7 @@ class MainActivity : Activity(), View.OnClickListener {
                     }
                     i.putExtra("selectedsingleplayer", false)
                     i.putExtra("gameId", "$gameID")
+                    logGameEvent("online")
                     startActivity(i)
                 }
             }

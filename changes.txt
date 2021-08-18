@@ -26,3 +26,15 @@ Aishik Kirtaniya
             versionCode 4
             versionName "4_TTT"
                 Added GServices with play store key
+    18-08-2021
+        00:54
+            versionCode 6
+            versionName "6_TTT"
+                Fixed MatchMaking
+                Fixed Timers
+                Fixed Network Lag
+                Fixed Layouts a bit
+        16:32
+            versionCode 7
+            versionName "7_TTT"
+                Fixed Privacy related to user email

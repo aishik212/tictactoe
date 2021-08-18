@@ -17,16 +17,22 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.google.android.gms.tasks.OnCanceledListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class AfterstartOnline extends AppCompatActivity {
+public class AfterstartOnline extends AppCompatActivity implements View.OnClickListener {
 
     static int[][] tracker = new int[3][3];
     static int[][] buttonpressed = new int[3][3];
@@ -69,10 +75,12 @@ public class AfterstartOnline extends AppCompatActivity {
         database.child("game").child(gameId).removeValue();
     }
 
+    String TAG = "texts";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.content_afterstart);
+        setContentView(R.layout.content_afterstart_online);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         q1 = findViewById(R.id.u00);
@@ -148,9 +156,13 @@ public class AfterstartOnline extends AppCompatActivity {
                             playmore();
                         } else {
                             for (DataSnapshot s : snapshot.getChildren()) {
-                                dbUpdate = true;
                                 String key = s.getKey();
-                                if (key != null && key.length() == 2) {
+                                String v = s.getValue().toString();
+                                if (key != null && key.length() == 2 && !v.equals(Utils.getMAuth().getCurrentUser().getUid())) {
+                                    Log.d("texts", "onDataChange: " + key + " " + v);
+                                    Log.d("texts", "onDataChange: aaaa " + key);
+                                    dbUpdate = false;
+                                    //Should not Update DB dbUpdate = false
                                     pany(key);
                                 }
                             }
@@ -168,6 +180,23 @@ public class AfterstartOnline extends AppCompatActivity {
                 this,
                 getString(R.string.admobBasicBannerId)
         );
+        DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
+        connectedRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                boolean connected = snapshot.getValue(Boolean.class);
+                if (connected) {
+                    Log.d(TAG, "connected");
+                } else {
+                    Log.d(TAG, "not connected");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.w(TAG, "Listener was cancelled");
+            }
+        });
     }
 
     private void dismissDialog(Dialog dialog) {
@@ -199,34 +228,93 @@ public class AfterstartOnline extends AppCompatActivity {
     public void pany(String location) {
         location = location.trim();
         String[] split = location.trim().split("", 0);
-        updateOnDB(location);
-        vib(60, true);
-        /**
-         * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
-         * so that it doesnt outputs wrong value
-         */
-        int patch = 0;
-        if (location.length() < split.length) {
-            patch = split.length - location.length();
-        }
-        int xval = Integer.parseInt(split[patch]);
-        int yval = Integer.parseInt(split[1 + patch]);
-        if (win == 0 && buttonpressed[xval][yval] == 0) {
-            if (flag % 2 == 0)
-                tracker[xval][yval] = ax;
-            else
-                tracker[xval][yval] = zero;
+//        updateOnDB(location);
+        skippable = false;
+        if (dbUpdate) {/*If need to update DB*/
+            try {
+                String finalLocation = location;
+                gameChild.child(location).setValue(Utils.getMAuth().getCurrentUser().getUid()).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Log.d("texts", "onComplete: ");
+                    }
+                }).addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        Log.d("texts", "onSuccess: ");
+                        vib(60, true);
+                        /**
+                         * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
+                         * so that it doesn't outputs wrong value
+                         */
+                        int patch = 0;
+                        if (finalLocation.length() < split.length) {
+                            patch = split.length - finalLocation.length();
+                        }
+                        int xval = Integer.parseInt(split[patch]);
+                        int yval = Integer.parseInt(split[1 + patch]);
+                        if (win == 0 && buttonpressed[xval][yval] == 0) {
+                            if (flag % 2 == 0)
+                                tracker[xval][yval] = ax;
+                            else
+                                tracker[xval][yval] = zero;
 
-            printBoard();
-            winchecker();
-            cpuplay();
-            flag++;
-            if (xval == 0) {
-                buttonpressed[xval][yval]++;
-            } else {
-                ++buttonpressed[xval][yval];
+                            printBoard();
+                            winchecker();
+                            cpuplay();
+                            flag++;
+                            if (xval == 0) {
+                                buttonpressed[xval][yval]++;
+                            } else {
+                                ++buttonpressed[xval][yval];
+                            }
+                        }
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d("texts", "onFailure: " + e.getLocalizedMessage());
+                    }
+                }).addOnCanceledListener(new OnCanceledListener() {
+                    @Override
+                    public void onCanceled() {
+                        Log.d("texts", "onCanceled: ");
+                    }
+                });
+            } catch (Exception e) {
+                Log.d("texts", "pany: " + e.getLocalizedMessage());
+            }
+        } else {
+            Log.d("texts", "pany: B");
+            vib(60, true);
+            /**
+             * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
+             * so that it doesnt outputs wrong value
+             */
+            int patch = 0;
+            if (location.length() < split.length) {
+                patch = split.length - location.length();
+            }
+            int xval = Integer.parseInt(split[patch]);
+            int yval = Integer.parseInt(split[1 + patch]);
+            if (win == 0 && buttonpressed[xval][yval] == 0) {
+                if (flag % 2 == 0)
+                    tracker[xval][yval] = ax;
+                else
+                    tracker[xval][yval] = zero;
+
+                printBoard();
+                winchecker();
+                cpuplay();
+                flag++;
+                if (xval == 0) {
+                    buttonpressed[xval][yval]++;
+                } else {
+                    ++buttonpressed[xval][yval];
+                }
             }
         }
+        dbUpdate = false;
     }
 
     public void p00(View view) {
@@ -740,6 +828,9 @@ public class AfterstartOnline extends AppCompatActivity {
             for (int j = 0; j < tracker[0].length; j++) {
                 if (tracker[i][j] == 0) {
                     Log.d("texts", "clickRandom: " + i + "" + j);
+                    Log.d("texts", "onDataChange: bbbb " + i + "" + j);
+                    dbUpdate = true;
+                    //Should Update DB dbUpdate = true
                     pany(i + "" + j);
                     return;
                 }
@@ -778,6 +869,7 @@ public class AfterstartOnline extends AppCompatActivity {
             @Override
             public void onTick(long l) {
                 runOnUiThread(() -> {
+                    Log.d("texts", "onTick: " + l);
                     if (skippable) {
                         turn_tv.setText("Your Turn " + (l) / 1000 + " Seconds Left");
                     } else {
@@ -795,7 +887,9 @@ public class AfterstartOnline extends AppCompatActivity {
                 }
             }
         };
-        ctd.start();
+        if (skippable) {
+            ctd.start();
+        }
     }
 
     private void disableAll() {
@@ -858,9 +952,9 @@ public class AfterstartOnline extends AppCompatActivity {
     }
 
     private void destroyTimer() {
+        skippable = false;
         try {
             if (ctd != null) {
-                skippable = false;
                 ctd.cancel();
             }
         } catch (Exception e) {
@@ -1114,7 +1208,7 @@ public class AfterstartOnline extends AppCompatActivity {
 //    }
 
     private void showExitDialog() {
-        final Dialog dialog = new Dialog(AfterstartOnline.this);
+        dialog = new Dialog(AfterstartOnline.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_layout_exit);
         dialog.setCancelable(false);
@@ -1143,6 +1237,16 @@ public class AfterstartOnline extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         showExitDialog();
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (view.getTag() != null) {
+            Log.d("texts", "onDataChange: cccc " + view.getTag().toString());
+            dbUpdate = true;
+            //Should Update DB dbUpdate = true
+            pany(view.getTag().toString());
+        }
     }
 
 //    @Override
