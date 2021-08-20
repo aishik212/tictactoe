@@ -38,3 +38,19 @@ Aishik Kirtaniya
             versionCode 7
             versionName "7_TTT"
                 Fixed Privacy related to user email
+    19-08-2021
+        00:23
+            versionCode 7
+            versionName "7_TTT"
+                Double Tapping Fixed
+                Background Game on fixed
+                Useless Toasts removed
+        17:05
+            versionCode 8
+            versionName "8_TTT"
+                Multiple Attached Listener fixes
+        18:45
+            versionCode 8
+            versionName "8_TTT"
+                Fixed Exit and play game
+                fixed game resetting

@@ -19,8 +19,8 @@ android {
         applicationId "simpleapps.tictactoe"
         minSdkVersion 21
         targetSdkVersion 31
-        versionCode 7
-        versionName "7_TTT"
+        versionCode 8
+        versionName "8_TTT"
         signingConfig signingConfigs.tttkey
         multiDexEnabled true
     }
@@ -55,6 +55,10 @@ dependencies {
     ////Ads
     implementation 'com.google.android.gms:play-services-ads:20.2.0'
     ////--------
+    //--------
+
+    //AdMediation
+    implementation 'com.google.android.ads:mediation-test-suite:2.0.0'
     //--------
 
     //GLIDE

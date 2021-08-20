@@ -159,7 +159,7 @@ class MainActivity : Activity(), View.OnClickListener {
         setContentView(R.layout.activity_main)
         //apply the animation ( fade In ) to your LAyout
         initializeAds()
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        FirebaseDatabase.getInstance().setPersistenceEnabled(false);
         initializeRemoteConfig()
         if (intent.getBooleanExtra("EXIT", false)) {
             finish()
@@ -354,6 +354,7 @@ class MainActivity : Activity(), View.OnClickListener {
         } else {
             logGameEvent("offline_double")
         }
+        findViewById<View>(R.id.startOnline).isEnabled = true
         startActivity(i)
     }
 
@@ -391,6 +392,7 @@ class MainActivity : Activity(), View.OnClickListener {
         i.putExtra("player1ax", true)
         i.putExtra("selectedsingleplayer", true)
         logGameEvent("online_bot")
+        findViewById<View>(R.id.startOnline).isEnabled = true
         startActivity(i)
     }
 
@@ -445,12 +447,16 @@ class MainActivity : Activity(), View.OnClickListener {
         }
     }
 
+
     override fun onClick(p0: View?) {
         if (p0 != null) {
             when (p0.id) {
                 R.id.startOnline -> {
                     //True if logged in
                     if (checkLogin()) {
+                        Log.d("texts", "onClick: a" + p0.isEnabled)
+                        p0.isEnabled = false
+                        Log.d("texts", "onClick: " + p0.isEnabled)
                         searchUser()
                     } else {
 //                        if not logged in
@@ -458,6 +464,7 @@ class MainActivity : Activity(), View.OnClickListener {
                     }
                 }
                 R.id.cancel_game_btn -> {
+                    findViewById<View>(R.id.startOnline).isEnabled = true
                     hideLoader()
                     sanitize_user_db(database, uid)
                 }
@@ -491,6 +498,7 @@ class MainActivity : Activity(), View.OnClickListener {
             sanitize_user_db(database, uid)
             listener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d("texts", "onDataChange: " + snapshot.value + " " + snapshot.childrenCount)
                     val displayName = mAuth?.currentUser?.displayName ?: "Anonymous"
                     val waitingRef = database.child("waiting")
                     if (snapshot.childrenCount > 0) {
@@ -572,6 +580,11 @@ class MainActivity : Activity(), View.OnClickListener {
     private fun hideLoader() {
         ctdRandom?.cancel()
         searchIncludeLayout.visibility = GONE
+        try {
+            child?.removeEventListener(value!!)
+        } catch (e: Exception) {
+            Log.d("texts", "hideLoader: " + e.localizedMessage)
+        }
     }
 
 
@@ -590,12 +603,16 @@ class MainActivity : Activity(), View.OnClickListener {
         }
     }
 
+    var child: DatabaseReference? = null
+    var value: ValueEventListener? = null
+
     private fun checkForMatches() {
-        val child = Utils.getDatabase(this@MainActivity).child("matches").child(mAuth?.uid + "")
-        child.addValueEventListener(object : ValueEventListener {
+        Log.d("texts", "checkForMatches: ")
+        child = Utils.getDatabase(this@MainActivity).child("matches").child(mAuth?.uid + "")
+        value = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.value != null) {
-                    child.removeEventListener(this)
+                    child?.removeEventListener(this)
                     hideLoader()
                     ctdRandom?.cancel()
                     val gameID = snapshot.child("gameid").value
@@ -620,6 +637,8 @@ class MainActivity : Activity(), View.OnClickListener {
                     i.putExtra("selectedsingleplayer", false)
                     i.putExtra("gameId", "$gameID")
                     logGameEvent("online")
+                    findViewById<View>(R.id.startOnline).isEnabled = true
+                    Log.d("texts", "onDataChange: startE")
                     startActivity(i)
                 }
             }
@@ -628,6 +647,13 @@ class MainActivity : Activity(), View.OnClickListener {
 
 
             }
-        })
+        }
+        try {
+            if (value != null) {
+                child?.addValueEventListener(value as ValueEventListener)
+            }
+        } catch (e: Exception) {
+            Log.d("texts", "checkForMatches: " + e.localizedMessage)
+        }
     }
 }

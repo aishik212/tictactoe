@@ -17,18 +17,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -67,15 +64,51 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         sanitize_game_db(Utils.getDatabase(getApplicationContext()), Utils.getMAuth().getUid());
     }
 
+    ValueEventListener gameListener;
+
     private void sanitize_game_db(
             DatabaseReference database,
             String uid
     ) {
         database.child("matches").child(uid).removeValue();
         database.child("game").child(gameId).removeValue();
+        try {
+            gameChild.removeEventListener(gameListener);
+        } catch (Exception e) {
+            Log.d("texts", "sanitize_game_db: " + e.getLocalizedMessage());
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            gameChild.removeEventListener(gameListener);
+        } catch (Exception e) {
+            Log.d("texts", "sanitize_game_db: " + e.getLocalizedMessage());
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        removeThenAddListener();
     }
 
     String TAG = "texts";
+
+    private void removeThenAddListener() {
+        try {
+            gameChild.removeEventListener(gameListener);
+        } catch (Exception e) {
+            Log.d("texts", "sanitize_game_db: " + e.getLocalizedMessage());
+        }
+        try {
+            gameChild.addValueEventListener(gameListener);
+        } catch (Exception e) {
+            Log.d("texts", "sanitize_game_db: " + e.getLocalizedMessage());
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,11 +175,13 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         if (gameId != null) {
             gameChild = game.child(gameId);
             Log.d("texts", "onCreate: " + gameId);
-            gameChild.addValueEventListener(new ValueEventListener() {
+            gameListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Log.d("texts", "onDataChange: " + snapshot.getValue());
                     if (snapshot.getValue() != null) {
                         if (snapshot.getValue().equals("reset")) {
+                            gameChild.removeEventListener(gameListener);
                             dismissDialog(dialog);
                             Toast.makeText(AfterstartOnline.this, "User Left the Game", Toast.LENGTH_SHORT).show();
                             doreset();
@@ -158,6 +193,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
                             for (DataSnapshot s : snapshot.getChildren()) {
                                 String key = s.getKey();
                                 String v = s.getValue().toString();
+                                Log.d("texts", "onDataChange: " + v + " " + Utils.getMAuth().getCurrentUser().getUid());
                                 if (key != null && key.length() == 2 && !v.equals(Utils.getMAuth().getCurrentUser().getUid())) {
                                     Log.d("texts", "onDataChange: " + key + " " + v);
                                     Log.d("texts", "onDataChange: aaaa " + key);
@@ -174,29 +210,14 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
                 public void onCancelled(@NonNull DatabaseError error) {
                     Log.d("texts", "onCancelled: " + error.getDetails());
                 }
-            });
+            };
+            gameChild.addValueEventListener(gameListener);
         }
         Utils.AdUtils.showBannerAd(
                 this,
                 getString(R.string.admobBasicBannerId)
         );
-        DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
-        connectedRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                boolean connected = snapshot.getValue(Boolean.class);
-                if (connected) {
-                    Log.d(TAG, "connected");
-                } else {
-                    Log.d(TAG, "not connected");
-                }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w(TAG, "Listener was cancelled");
-            }
-        });
     }
 
     private void dismissDialog(Dialog dialog) {
@@ -230,7 +251,9 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         String[] split = location.trim().split("", 0);
 //        updateOnDB(location);
         skippable = false;
+        Log.d("texts", "pany: " + dbUpdate);
         if (dbUpdate) {/*If need to update DB*/
+            disableAll();
             try {
                 String finalLocation = location;
                 gameChild.child(location).setValue(Utils.getMAuth().getCurrentUser().getUid()).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -238,49 +261,37 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
                     public void onComplete(@NonNull Task<Void> task) {
                         Log.d("texts", "onComplete: ");
                     }
-                }).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        Log.d("texts", "onSuccess: ");
-                        vib(60, true);
-                        /**
-                         * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
-                         * so that it doesn't outputs wrong value
-                         */
-                        int patch = 0;
-                        if (finalLocation.length() < split.length) {
-                            patch = split.length - finalLocation.length();
-                        }
-                        int xval = Integer.parseInt(split[patch]);
-                        int yval = Integer.parseInt(split[1 + patch]);
-                        if (win == 0 && buttonpressed[xval][yval] == 0) {
-                            if (flag % 2 == 0)
-                                tracker[xval][yval] = ax;
-                            else
-                                tracker[xval][yval] = zero;
+                }).addOnSuccessListener(unused -> {
+                    Log.d("texts", "onSuccess: ");
+                    vib(60, true);
+                    /**
+                     * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
+                     * so that it doesn't outputs wrong value
+                     */
+                    int patch = 0;
+                    if (finalLocation.length() < split.length) {
+                        patch = split.length - finalLocation.length();
+                    }
+                    int xval = Integer.parseInt(split[patch]);
+                    int yval = Integer.parseInt(split[1 + patch]);
+                    if (win == 0 && buttonpressed[xval][yval] == 0) {
+                        if (flag % 2 == 0)
+                            tracker[xval][yval] = ax;
+                        else
+                            tracker[xval][yval] = zero;
 
-                            printBoard();
-                            winchecker();
-                            cpuplay();
-                            flag++;
-                            if (xval == 0) {
-                                buttonpressed[xval][yval]++;
-                            } else {
-                                ++buttonpressed[xval][yval];
-                            }
+                        printBoard();
+                        winchecker();
+                        cpuplay();
+                        flag++;
+                        if (xval == 0) {
+                            buttonpressed[xval][yval]++;
+                        } else {
+                            ++buttonpressed[xval][yval];
                         }
                     }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d("texts", "onFailure: " + e.getLocalizedMessage());
-                    }
-                }).addOnCanceledListener(new OnCanceledListener() {
-                    @Override
-                    public void onCanceled() {
-                        Log.d("texts", "onCanceled: ");
-                    }
-                });
+                }).addOnFailureListener(e -> Log.d("texts", "onFailure: " + e.getLocalizedMessage()))
+                        .addOnCanceledListener(() -> Log.d("texts", "onCanceled: "));
             } catch (Exception e) {
                 Log.d("texts", "pany: " + e.getLocalizedMessage());
             }
@@ -295,14 +306,17 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
             if (location.length() < split.length) {
                 patch = split.length - location.length();
             }
+            Log.d("texts", "pany: " + location + " " + Arrays.toString(split) + " " + patch);
             int xval = Integer.parseInt(split[patch]);
+            Log.d("texts", "pany: a " + xval);
             int yval = Integer.parseInt(split[1 + patch]);
+            Log.d("texts", "pany: b " + yval);
+            Log.d("texts", "pany: c " + win + " " + buttonpressed[xval][yval] + " " + flag + " " + (flag % 2));
             if (win == 0 && buttonpressed[xval][yval] == 0) {
                 if (flag % 2 == 0)
                     tracker[xval][yval] = ax;
                 else
                     tracker[xval][yval] = zero;
-
                 printBoard();
                 winchecker();
                 cpuplay();
@@ -784,7 +798,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     public void printBoard() {
-
+        Log.d("texts", "printBoard: " + Arrays.deepToString(tracker));
 
         if (tracker[0][0] == 1) q1.setImageResource(R.drawable.x);
         if (tracker[0][0] == 10) q1.setImageResource(R.drawable.oo);
@@ -839,6 +853,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     private void checkCurrentUser() {
+        Log.d("texts", "checkCurrentUser: ");
         if (gameId.startsWith(Utils.getMAuth().getUid())) {
             if (flag == 0) {
                 disableAll();
@@ -893,6 +908,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     private void disableAll() {
+        Log.d("texts", "disableAll: ");
         skippable = false;
         skipAfter10Seconds();
         turn_tv.setText("Opponents Turn");
@@ -902,6 +918,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     private void enableAll() {
+        Log.d("texts", "enableAll: ");
         skippable = true;
         skipAfter10Seconds();
         turn_tv.setText("Your Turn");
@@ -1194,9 +1211,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         TextView qqqq = findViewById(R.id.p2score);
         qqqq.setText("" + score2);
 
-        Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
-
-        gameChild.setValue("reset");
+//        Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
     }
 
 
@@ -1222,6 +1237,8 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
             @Override
             public void onClick(View view) {
                 doreset();
+                gameChild.removeEventListener(gameListener);
+                gameChild.setValue("reset");
                 finish();
             }
         });

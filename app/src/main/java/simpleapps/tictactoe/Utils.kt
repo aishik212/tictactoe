@@ -3,13 +3,12 @@ package simpleapps.tictactoe
 import android.app.Activity
 import android.content.Context
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.WindowManager
 import android.widget.FrameLayout
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.*
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -80,14 +79,25 @@ object Utils {
                     val adRequest = AdRequest
                         .Builder()
                         .build()
+                    adView.adListener = object : AdListener() {
+                        override fun onAdFailedToLoad(p0: LoadAdError) {
+                            super.onAdFailedToLoad(p0)
+                            view.visibility = GONE
+                        }
+
+                        override fun onAdLoaded() {
+                            super.onAdLoaded()
+                            view.removeAllViews()
+                            view.addView(adView)
+                            view.visibility = VISIBLE
+                        }
+                    }
                     adView.loadAd(adRequest)
-                    view.removeAllViews()
-                    view.addView(adView)
-                    view.visibility = VISIBLE
                 } else {
                     view.visibility = GONE
                 }
             } catch (e: Exception) {
+                Log.d("texts", "showBannerAd: " + e.localizedMessage)
             }
 
         }
