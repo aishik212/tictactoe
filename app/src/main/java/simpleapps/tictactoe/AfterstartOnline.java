@@ -19,6 +19,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -57,12 +58,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     DatabaseReference gameChild;
     Dialog dialog;
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        destroyTimer();
-        sanitize_game_db(Utils.getDatabase(getApplicationContext()), Utils.getMAuth().getUid());
-    }
+    FirebaseAuth mAuth;
 
     ValueEventListener gameListener;
 
@@ -110,10 +106,28 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    String uid;
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        destroyTimer();
+        sanitize_game_db(Utils.getDatabase(getApplicationContext()), uid);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_afterstart_online);
+        mAuth = Utils.getMAuth();
+        if (mAuth == null) {
+            finish();
+        } else {
+            uid = mAuth.getUid();
+        }
+        if (uid == null) {
+            finish();
+        }
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         q1 = findViewById(R.id.u00);
@@ -151,7 +165,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         player1 = players[0];
         player2 = players[1];
 
-        startsWith = gameId.startsWith(Utils.getMAuth().getUid());
+        startsWith = gameId.startsWith(uid);
         if (gameId != null && startsWith) {
             flag = 0;
             enableAll();
@@ -193,8 +207,8 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
                             for (DataSnapshot s : snapshot.getChildren()) {
                                 String key = s.getKey();
                                 String v = s.getValue().toString();
-                                Log.d("texts", "onDataChange: " + v + " " + Utils.getMAuth().getCurrentUser().getUid());
-                                if (key != null && key.length() == 2 && !v.equals(Utils.getMAuth().getCurrentUser().getUid())) {
+                                Log.d("texts", "onDataChange: " + v + " " + mAuth.getCurrentUser().getUid());
+                                if (key != null && key.length() == 2 && !v.equals(mAuth.getCurrentUser().getUid())) {
                                     Log.d("texts", "onDataChange: " + key + " " + v);
                                     Log.d("texts", "onDataChange: aaaa " + key);
                                     dbUpdate = false;
@@ -213,9 +227,9 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
             };
             gameChild.addValueEventListener(gameListener);
         }
-        Utils.AdUtils.showBannerAd(
+        Utils.AdUtils.showSDKXBannerAd(
                 this,
-                getString(R.string.admobBasicBannerId)
+                getString(R.string.SDKXBottomId)
         );
 
     }
@@ -241,7 +255,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     private void updateOnDB(String s) {
         skippable = false;
         if (!dbUpdate) {
-            gameChild.child(s).setValue(Utils.getMAuth().getCurrentUser().getUid());
+            gameChild.child(s).setValue(mAuth.getCurrentUser().getUid());
         }
         dbUpdate = false;
     }
@@ -256,7 +270,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
             disableAll();
             try {
                 String finalLocation = location;
-                gameChild.child(location).setValue(Utils.getMAuth().getCurrentUser().getUid()).addOnCompleteListener(new OnCompleteListener<Void>() {
+                gameChild.child(location).setValue(mAuth.getCurrentUser().getUid()).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         Log.d("texts", "onComplete: ");
@@ -854,7 +868,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
 
     private void checkCurrentUser() {
         Log.d("texts", "checkCurrentUser: ");
-        if (gameId.startsWith(Utils.getMAuth().getUid())) {
+        if (gameId.startsWith(uid)) {
             if (flag == 0) {
                 disableAll();
             } else if (flag % 2 == 0) {
@@ -937,6 +951,12 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
 //        TextView playerOneScore = dialog.findViewById(R.id.player_one_score);
 //        TextView playerTwoScore = dialog.findViewById(R.id.player_two_score);
         TextView titleText = dialog.findViewById(R.id.title_text);
+        Utils.AdUtils.showSDKXBannerAd(
+                this,
+                getString(R.string.SDKXBottomId),
+                dialog.findViewById(R.id.dialogbannerAdFrame)
+        );
+
         dialog.setCancelable(false);
         try {
             dialog.show();
@@ -1226,6 +1246,11 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         dialog = new Dialog(AfterstartOnline.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_layout_exit);
+        Utils.AdUtils.showSDKXBannerAd(
+                this,
+                getString(R.string.SDKXBottomId),
+                dialog.findViewById(R.id.dialogbannerAdFrame)
+        );
         dialog.setCancelable(false);
 
         dialog.show();

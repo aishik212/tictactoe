@@ -97,9 +97,9 @@ public class Afterstart extends AppCompatActivity {
         p1.setText(player1);
         p2.setText(player2);
         Toast.makeText(this, "" + player1 + "\'s turn", Toast.LENGTH_SHORT).show();
-        Utils.AdUtils.showBannerAd(
+        Utils.AdUtils.showSDKXBannerAd(
                 this,
-                getString(R.string.admobBasicBannerId)
+                getString(R.string.SDKXBottomId)
         );
     }
 
@@ -627,6 +627,11 @@ public class Afterstart extends AppCompatActivity {
 //        TextView playerOneScore = dialog.findViewById(R.id.player_one_score);
 //        TextView playerTwoScore = dialog.findViewById(R.id.player_two_score);
         TextView titleText = dialog.findViewById(R.id.title_text);
+        Utils.AdUtils.showSDKXBannerAd(
+                this,
+                getString(R.string.SDKXBottomId),
+                dialog.findViewById(R.id.dialogbannerAdFrame)
+        );
         dialog.setCancelable(false);
         dialog.show();
 
@@ -757,13 +762,17 @@ public class Afterstart extends AppCompatActivity {
             q8.setImageDrawable(null);
             q9.setImageDrawable(null);
 
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
                     buttonpressed[i][j] = 0;
+                }
+            }
 
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
                     tracker[i][j] = 0;
+                }
+            }
 
 
             if ((game + 1) % 2 == 0)
@@ -851,6 +860,11 @@ public class Afterstart extends AppCompatActivity {
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_layout_exit);
         dialog.setCancelable(false);
+        Utils.AdUtils.showSDKXBannerAd(
+                this,
+                getString(R.string.SDKXBottomId),
+                dialog.findViewById(R.id.dialogbannerAdFrame)
+        );
 
         dialog.show();
 

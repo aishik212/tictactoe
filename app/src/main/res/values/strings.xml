@@ -9,8 +9,26 @@
 
 
     <!--    ADMOB START -->
-    <string name="admobAppId">ca-app-pub-5925062597723127~9998237077</string>
-    <string name="admobBasicBannerId">ca-app-pub-5925062597723127/3373118971</string>
+    <string name="admobAppId">ca-app-pub-5453528366471630~2622415133</string>
+    <string name="appOpenID">ca-app-pub-5453528366471630/7480972025</string>
+    <string name="BasicBannerId">ca-app-pub-5453528366471630/5485765084</string>
+    <string name="DialogBannerId">ca-app-pub-5453528366471630/2662737146</string>
+    <string name="ExitDialogBannerId">ca-app-pub-5453528366471630/9633154388</string>
+    <string name="SearchBannerId">ca-app-pub-5453528366471630/9688994702</string>
+    <string name="ExitIntersId">ca-app-pub-5453528366471630/8461858733</string>
     <string name="tcmessage">By Using this App you accept to our terms and Conditions and Privacy Policy. Click Here to Read our Terms and Conditions and Privacy Policy</string>
     <!--    ADMOB END -->
+
+    <!--    SDKX START -->
+    <string name="SDKXAppId">81133435</string>
+    <string name="SDKXBottomId">float-10343</string>
+    <!--    SDKX END -->
+
+    <!--    FACEBOOK START -->
+    <string name="facebook_app_id">211310964419343</string>
+    <string name="fb_login_protocol_scheme">fb211310964419343</string>
+    <string name="load_complete">Load Complete.</string>
+    <!--    FACEBOOK START -->
+
+
 </resources>

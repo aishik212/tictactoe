@@ -7,6 +7,72 @@
     android:layout_height="match_parent">
 
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout6"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:elevation="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/tc_tv"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <FrameLayout
+            android:id="@+id/gamel3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <include
+                layout="@layout/game_layout_3"
+                android:clickable="false" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/gamel1"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <include
+                layout="@layout/game_layout_1"
+                android:clickable="false" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/gamel4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <include
+                layout="@layout/game_layout_4"
+                android:clickable="false" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/gamel2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <include
+                layout="@layout/game_layout_2"
+                android:clickable="false" />
+        </FrameLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <FrameLayout
         android:id="@+id/bannerAdFrame"
         android:layout_width="0dp"
@@ -21,7 +87,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/tc_tv"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout6"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout"
@@ -416,6 +482,7 @@
         android:onClick="onClick"
         android:text="@string/tcmessage"
         android:textAlignment="center"
+        android:textSize="10sp"
         android:textStyle="bold|italic"
         app:layout_constraintBottom_toTopOf="@+id/bannerAdFrame"
         app:layout_constraintEnd_toEndOf="parent"

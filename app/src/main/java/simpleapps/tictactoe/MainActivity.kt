@@ -1,7 +1,9 @@
 package simpleapps.tictactoe
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Intent
 import android.content.Intent.*
 import android.net.Uri
@@ -13,10 +15,15 @@ import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.view.Window
 import android.view.inputmethod.EditorInfo
 import android.widget.*
+import androidx.browser.customtabs.*
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
-import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.*
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
@@ -25,18 +32,24 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+import com.greedygame.core.AppConfig
+import com.greedygame.core.GreedyGameAds
 import de.hdodenhof.circleimageview.CircleImageView
 import org.json.JSONObject
+import simpleapps.tictactoe.Utils.AdUtils.showSDKXBannerAd
 import simpleapps.tictactoe.Utils.G_CODE
 import simpleapps.tictactoe.Utils.LoginMethod
 import simpleapps.tictactoe.Utils.TAG
 import simpleapps.tictactoe.Utils.adResult
+import simpleapps.tictactoe.Utils.gameViewType
 import simpleapps.tictactoe.Utils.login
 import simpleapps.tictactoe.Utils.mAuth
+import simpleapps.tictactoe.Utils.setGameView
 import java.util.*
 
 
@@ -159,7 +172,22 @@ class MainActivity : Activity(), View.OnClickListener {
         setContentView(R.layout.activity_main)
         //apply the animation ( fade In ) to your LAyout
         initializeAds()
-        FirebaseDatabase.getInstance().setPersistenceEnabled(false);
+        val options = getSharedPreferences("options", 0)
+        openCount = options?.getInt("open_count", 0) ?: 0
+        options?.edit()?.putInt("open_count", ++openCount)?.apply()
+        Log.d("texts", "onCreate: open $openCount")
+/*
+        if (openCount > 0 && (openCount + 1) % 2 == 1) {
+            showAppOpenAd(this)
+        }
+*/
+        initCustomtab()
+        try {
+            FirebaseDatabase.getInstance().setPersistenceEnabled(false);
+        } catch (e: Exception) {
+
+        }
+
         initializeRemoteConfig()
         if (intent.getBooleanExtra("EXIT", false)) {
             finish()
@@ -223,7 +251,86 @@ class MainActivity : Activity(), View.OnClickListener {
         } else {
             online_play_btn.text = "Login to Play Online"
         }
+        Log.d("texts", "onCreate: " + getString(R.string.ExitIntersId))
+        /*val gifView =
+            findViewById<FrameLayout>(R.id.gamel1).findViewWithTag<ImageView>("giphy")
+        Glide.with(applicationContext)
+            .load(ContextCompat.getDrawable(applicationContext, R.drawable.banner8)).into(gifView)*/
     }
+
+    private fun loadExitIAD() {
+        InterstitialAd.load(
+            this,
+            getString(R.string.ExitIntersId),
+            AdRequest.Builder().build(),
+            object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(p0: InterstitialAd) {
+                    super.onAdLoaded(p0)
+                    Log.d("texts", "onAdLoaded: ")
+                    iad = p0
+                }
+
+                override fun onAdFailedToLoad(p0: LoadAdError) {
+                    super.onAdFailedToLoad(p0)
+                    Log.d("texts", "onAdFailedToLoad: " + p0.message)
+                    Log.d("texts", "onAdFailedToLoad: " + p0.domain)
+                    Log.d("texts", "onAdFailedToLoad: " + p0.cause)
+                    Log.d("texts", "onAdFailedToLoad: " + p0.code)
+                    Log.d("texts", "onAdFailedToLoad: " + p0.responseInfo.adapterResponses)
+                }
+            })
+    }
+
+    var iad: InterstitialAd? = null
+    override fun onBackPressed() {
+        if (iad != null) {
+            iad?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+                    super.onAdFailedToShowFullScreenContent(p0)
+                    showExitDialog()
+                }
+
+                override fun onAdDismissedFullScreenContent() {
+                    super.onAdDismissedFullScreenContent()
+                    showExitDialog()
+                }
+            }
+            iad?.show(this)
+        } else {
+            showExitDialog()
+        }
+    }
+
+    //    @Override
+    //    public boolean onCreateOptionsMenu(Menu menu) {
+    //        // Inflate the menu; this adds items to the action bar if it is present.
+    //        getMenuInflater().inflate(R.menu.menu_main, menu);
+    //        return true;
+    //    }
+
+    lateinit var dialog: Dialog
+
+    private fun showExitDialog() {
+        dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_layout_exit)
+        showSDKXBannerAd(
+            this,
+            getString(R.string.SDKXBottomId),
+            dialog.findViewById(R.id.dialogbannerAdFrame)
+        )
+        dialog.setCancelable(false)
+        dialog.show()
+        val exit: Button = dialog.findViewById(R.id.yes_button)
+        val dismiss: Button = dialog.findViewById(R.id.no_button)
+        exit.setOnClickListener {
+            finish()
+        }
+        dismiss.setOnClickListener {
+            dialog.dismiss()
+        }
+    }
+
 
     private fun logGameEvent(gameType: String) {
         val bundle = Bundle()
@@ -232,18 +339,28 @@ class MainActivity : Activity(), View.OnClickListener {
     }
 
     private fun initializeAds() {
-        val requestConfiguration = MobileAds.getRequestConfiguration()
-            .toBuilder()
-            .build()
-        MobileAds.setRequestConfiguration(requestConfiguration)
+        val testDeviceIds = RequestConfiguration.Builder()
+            .setTestDeviceIds(listOf("09AD52B9FAF1C347EEC02EF796DE4BE0")).build()
+        MobileAds.setRequestConfiguration(testDeviceIds)
         MobileAds.initialize(
             this
         ) {
-            Utils.AdUtils.showBannerAd(
+/*
+            showBannerAd(
                 this,
-                getString(R.string.admobBasicBannerId)
+                getString(R.string.BasicBannerId)
             )
+*/
+            Log.d("texts", "initializeAds: " + it.adapterStatusMap)
+            val appConfig: AppConfig = AppConfig.Builder(this)
+                .withAppId(getString(R.string.SDKXAppId))  //Replace the app ID with your app's ID
+                .build()
+            GreedyGameAds.initWith(appConfig)
+            showSDKXBannerAd(this, getString(R.string.SDKXBottomId))
+            loadExitIAD()
         }
+
+
     }
 
     override fun onDestroy() {
@@ -262,7 +379,17 @@ class MainActivity : Activity(), View.OnClickListener {
             if (task.isSuccessful) {
                 adResult = JSONObject(remoteConfig.getString("showAds"))
                 initializeAds()
+                gameViewType = remoteConfig.getLong("games_view_type")
+                Log.d("texts", "initializeRemoteConfig: $gameViewType")
+                setGameView(this)
+            } else {
+                initializeAds()
+                setGameView(this)
+
             }
+        }.addOnFailureListener {
+            initializeAds()
+            setGameView(this)
         }
     }
 
@@ -278,53 +405,58 @@ class MainActivity : Activity(), View.OnClickListener {
         val difficulty1 = difficulty
         if (difficulty1 != null) {
             difficulty1.adapter = dataAdapter
-            difficulty1.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>,
-                    view: View,
-                    position: Int,
-                    id: Long
-                ) {
-                    try {
-                        val temp = parent.getItemAtPosition(position).toString()
-                        when (temp) {
-                            "Easy" -> {
-                                easy = true
-                                medium = false
-                                hard = false
-                                impossible = false
+            try {
+                difficulty1.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(
+                        parent: AdapterView<*>?,
+                        view: View?,
+                        position: Int,
+                        id: Long
+                    ) {
+                        try {
+                            if (parent != null) {
+                                when (parent.getItemAtPosition(position).toString()) {
+                                    "Easy" -> {
+                                        easy = true
+                                        medium = false
+                                        hard = false
+                                        impossible = false
+                                    }
+                                    "Medium" -> {
+                                        easy = false
+                                        medium = true
+                                        hard = false
+                                        impossible = false
+                                    }
+                                    "Hard" -> {
+                                        easy = false
+                                        medium = false
+                                        hard = true
+                                        impossible = false
+                                    }
+                                    "Impossible" -> {
+                                        easy = false
+                                        medium = false
+                                        hard = false
+                                        impossible = true
+                                    }
+                                }
                             }
-                            "Medium" -> {
-                                easy = false
-                                medium = true
-                                hard = false
-                                impossible = false
-                            }
-                            "Hard" -> {
-                                easy = false
-                                medium = false
-                                hard = true
-                                impossible = false
-                            }
-                            "Impossible" -> {
-                                easy = false
-                                medium = false
-                                hard = false
-                                impossible = true
-                            }
+                        } catch (e: Exception) {
+                            Log.d("texts", "onItemSelected: " + e.localizedMessage)
                         }
-                    } catch (e: Exception) {
-                        Log.d("texts", "onItemSelected: " + e.localizedMessage)
+
                     }
 
+                    override fun onNothingSelected(parent: AdapterView<*>?) {
+                        medium = true
+                        easy = false
+                        hard = false
+                        impossible = false
+                    }
                 }
+            } catch (e: Exception) {
 
-                override fun onNothingSelected(parent: AdapterView<*>?) {
-                    medium = true
-                    easy = false
-                    hard = false
-                    impossible = false
-                }
             }
         }
     }
@@ -402,7 +534,10 @@ class MainActivity : Activity(), View.OnClickListener {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                firebaseAuthWithGoogle(account.idToken)
+                val idToken = account.idToken
+                if (idToken != null) {
+                    firebaseAuthWithGoogle(idToken)
+                }
             } catch (e: ApiException) {
                 Log.d(
                     "texts",
@@ -447,10 +582,113 @@ class MainActivity : Activity(), View.OnClickListener {
         }
     }
 
+    var mClient: CustomTabsClient? = null
+    private fun initCustomtab() {
+        CustomTabsClient.bindCustomTabsService(
+            applicationContext,
+            "com.android.chrome",
+            object : CustomTabsServiceConnection() {
+                override fun onCustomTabsServiceConnected(
+                    name: ComponentName,
+                    client: CustomTabsClient
+                ) {
+                    var errorLocation: String = "A"
+                    try {
+                        // mClient is now valid.
+                        mClient = client
+                        errorLocation = "B"
+                        if (mClient != null) {
+                            errorLocation = "C"
+                            mClient?.warmup(0)
+                            errorLocation = "D"
+                            val session: CustomTabsSession? =
+                                mClient?.newSession(CustomTabsCallback())
+                            errorLocation = "E"
+                            builder1 = initBuilder(session)
+                            errorLocation = "F"
+                            session!!.mayLaunchUrl(Uri.parse(gameZopUrl), null, null)
+                            errorLocation = "G"
+                            Log.d("texts", "onCustomTabsServiceConnected: ")
+                        }
+                        errorLocation = "H"
+                    } catch (e: Exception) {
+                        FirebaseCrashlytics.getInstance().log("Error in location -> $errorLocation")
+                    }
+                }
+
+                override fun onServiceDisconnected(name: ComponentName?) {
+                    mClient = null
+                    Log.d("texts", "onServiceDisconnected: ")
+                }
+            })
+        Log.d("texts", "startGamezopActivity: " + mClient)
+        CustomTabsClient.connectAndInitialize(applicationContext, packageName)
+
+    }
+
+    lateinit var builder1: CustomTabsIntent.Builder
+    private fun initBuilder(session: CustomTabsSession?): CustomTabsIntent.Builder {
+        val builder = CustomTabsIntent.Builder()
+        if (session != null) {
+            builder.setSession(session)
+        }
+        builder.setStartAnimations(
+            this,
+            android.R.anim.slide_in_left,
+            android.R.anim.slide_out_right
+        )
+        builder.setExitAnimations(
+            this,
+            android.R.anim.slide_in_left,
+            android.R.anim.slide_out_right
+        )
+        val colorInt = ContextCompat.getColor(
+            applicationContext,
+            R.color.primaryColor
+        ) //red
+        val defaultColors = CustomTabColorSchemeParams.Builder()
+            .setToolbarColor(colorInt)
+            .build()
+        builder.setDefaultColorSchemeParams(defaultColors)
+        return builder
+    }
+
+    val gameZopUrl = "https://www.gamezop.com/?id=3759"
+    var openCount = 0
+    private fun startGamezopActivity() {
+        if (this::builder1.isInitialized) {
+            try {
+                val customTabsIntent: CustomTabsIntent = builder1.build()
+                customTabsIntent.launchUrl(this, Uri.parse(gameZopUrl))
+            } catch (e: Exception) {
+                val uri = Uri.parse(gameZopUrl)
+                val i1 = Intent(ACTION_VIEW)
+                i1.data = uri
+                startActivity(i1)
+            }
+        } else {
+            val uri = Uri.parse(gameZopUrl)
+            val i1 = Intent(ACTION_VIEW)
+            i1.data = uri
+            startActivity(i1)
+        }
+        try {
+            val instance = FirebaseAnalytics.getInstance(applicationContext)
+            val bundle = Bundle()
+            bundle.putInt("viewType", gameViewType.toInt())
+            bundle.putInt("appOpenCount", openCount)
+            instance.logEvent("GameZopClick", bundle)
+        } catch (e: Exception) {
+
+        }
+    }
 
     override fun onClick(p0: View?) {
         if (p0 != null) {
             when (p0.id) {
+                R.id.game_button -> {
+                    startGamezopActivity()
+                }
                 R.id.startOnline -> {
                     //True if logged in
                     if (checkLogin()) {
@@ -545,6 +783,11 @@ class MainActivity : Activity(), View.OnClickListener {
 
     private fun showLoader() {
         searchIncludeLayout.visibility = VISIBLE
+        showSDKXBannerAd(
+            this,
+            getString(R.string.SDKXBottomId),
+            (findViewById<FrameLayout>(R.id.searchBannerAdFrame))
+        )
         startLoader()
     }
 
