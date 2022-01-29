@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/parent"
+    android:background="@color/bgTsColor"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -88,6 +90,13 @@
     </LinearLayout>
 
 
+    <View
+        android:id="@+id/view2"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_gravity="center"
+        android:background="@color/primaryDarkColor" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -107,8 +116,9 @@
         <View
             android:layout_width="@dimen/line_thickness"
             android:layout_height="match_parent"
-            android:background="@drawable/linev"
-            android:rotation="2" />
+            android:background="@drawable/linesvv1"
+            android:rotation="0"
+            android:tag="linesvv" />
 
         <ImageView
             android:id="@+id/u01"
@@ -122,8 +132,9 @@
         <View
             android:layout_width="@dimen/line_thickness"
             android:layout_height="match_parent"
-            android:background="@drawable/linev"
-            android:rotation="182" />
+            android:background="@drawable/linesvv1"
+            android:rotation="180"
+            android:tag="linesvv" />
 
         <ImageView
             android:id="@+id/u02"
@@ -140,8 +151,9 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="@dimen/line_thickness"
-        android:background="@drawable/lineh"
-        android:scaleY="1.25" />
+        android:background="@drawable/lineshh1"
+        android:scaleY="1.25"
+        android:tag="lineshh" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -161,8 +173,9 @@
         <View
             android:layout_width="@dimen/line_thickness"
             android:layout_height="match_parent"
-            android:background="@drawable/linev"
-            android:rotation="182" />
+            android:background="@drawable/linesvv1"
+            android:rotation="180"
+            android:tag="linesvv" />
 
         <ImageView
             android:id="@+id/m01"
@@ -176,9 +189,10 @@
         <View
             android:layout_width="@dimen/line_thickness"
             android:layout_height="match_parent"
-            android:background="@drawable/linev"
+            android:background="@drawable/linesvv1"
             android:rotation="0"
-            android:rotationX="0" />
+            android:rotationX="0"
+            android:tag="linesvv" />
 
         <ImageView
             android:id="@+id/m02"
@@ -196,9 +210,10 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="@dimen/line_thickness"
-        android:background="@drawable/lineh"
+        android:background="@drawable/lineshh1"
         android:rotation="180"
-        android:scaleY="1.5" />
+        android:scaleY="1.5"
+        android:tag="lineshh" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -218,8 +233,8 @@
         <View
             android:layout_width="@dimen/line_thickness"
             android:layout_height="match_parent"
-            android:background="@drawable/linev"
-            android:rotation="4" />
+            android:background="@drawable/linesvv1"
+            android:tag="linesvv" />
 
         <ImageView
             android:id="@+id/b01"
@@ -233,8 +248,9 @@
         <View
             android:layout_width="@dimen/line_thickness"
             android:layout_height="match_parent"
-            android:background="@drawable/linev"
-            android:rotation="183" />
+            android:background="@drawable/linesvv1"
+            android:rotation="180"
+            android:tag="linesvv" />
 
         <ImageView
             android:id="@+id/b02"

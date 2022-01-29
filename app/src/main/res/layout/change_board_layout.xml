@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/textView11"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Change Board Color"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textColor="@color/secondaryDarkColor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Spinner
+        android:id="@+id/color_spinner"
+        style="@style/MyDarkToolbarStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView11" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="50dp"
+        android:background="@drawable/view_bg_2"
+        android:elevation="5dp"
+        android:orientation="vertical"
+        android:padding="2dp"
+        app:layout_constraintBottom_toTopOf="@+id/save_board"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/color_spinner">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/u00"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+            <View
+                android:layout_width="@dimen/line_thickness"
+                android:layout_height="match_parent"
+                android:background="@drawable/linesvv1"
+                android:rotation="0"
+                android:tag="linesvv" />
+
+            <ImageView
+                android:id="@+id/u01"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+            <View
+                android:layout_width="@dimen/line_thickness"
+                android:layout_height="match_parent"
+                android:background="@drawable/linesvv1"
+                android:rotation="180"
+                android:tag="linesvv" />
+
+            <ImageView
+                android:id="@+id/u02"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/view6"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/line_thickness"
+            android:background="@drawable/lineshh1"
+            android:scaleY="1.25"
+            android:tag="lineshh" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/m00"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+            <View
+                android:layout_width="@dimen/line_thickness"
+                android:layout_height="match_parent"
+                android:background="@drawable/linesvv1"
+                android:rotation="180"
+                android:tag="linesvv" />
+
+            <ImageView
+                android:id="@+id/m01"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+            <View
+                android:layout_width="@dimen/line_thickness"
+                android:layout_height="match_parent"
+                android:background="@drawable/linesvv1"
+                android:rotation="0"
+                android:rotationX="0"
+                android:tag="linesvv" />
+
+            <ImageView
+                android:id="@+id/m02"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/view7"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/line_thickness"
+            android:background="@drawable/lineshh1"
+            android:rotation="180"
+            android:scaleY="1.5"
+            android:tag="lineshh" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/b00"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+            <View
+                android:layout_width="@dimen/line_thickness"
+                android:layout_height="match_parent"
+                android:background="@drawable/linesvv1"
+                android:tag="linesvv" />
+
+            <ImageView
+                android:id="@+id/b01"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+            <View
+                android:layout_width="@dimen/line_thickness"
+                android:layout_height="match_parent"
+                android:background="@drawable/linesvv1"
+                android:rotation="180"
+                android:tag="linesvv" />
+
+            <ImageView
+                android:id="@+id/b02"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hapticFeedbackEnabled="false" />
+
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/save_board"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,7 @@
 package simpleapps.tictactoe;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -12,8 +13,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import com.google.android.gms.ads.AdError;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,63 +54,7 @@ public class Afterstart extends AppCompatActivity {
     String gameId;
 
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-
-
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.content_afterstart);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        q1 = findViewById(R.id.u00);
-        q2 = findViewById(R.id.u01);
-        q3 = findViewById(R.id.u02);
-        q4 = findViewById(R.id.m00);
-        q5 = findViewById(R.id.m01);
-        q6 = findViewById(R.id.m02);
-        q7 = findViewById(R.id.b00);
-        q8 = findViewById(R.id.b01);
-        q9 = findViewById(R.id.b02);
-        checkerlist.add(q1);
-        checkerlist.add(q2);
-        checkerlist.add(q3);
-        checkerlist.add(q4);
-        checkerlist.add(q5);
-        checkerlist.add(q6);
-        checkerlist.add(q7);
-        checkerlist.add(q8);
-        checkerlist.add(q9);
-        CharSequence[] players = getIntent().getCharSequenceArrayExtra("playersnames");
-        player1ax = getIntent().getBooleanExtra("player1ax", true);
-        selectedsingleplayer = getIntent().getBooleanExtra("selectedsingleplayer", true);
-        gameId = getIntent().getExtras().getString("gameId", null);
-        easy = getIntent().getBooleanExtra("easy", false);
-        medium = getIntent().getBooleanExtra("medium", false);
-        hard = getIntent().getBooleanExtra("hard", false);
-        impossible = getIntent().getBooleanExtra("impossible", false);
-
-        mp = MediaPlayer.create(this, R.raw.pencilsound);
-        mp.setVolume(0.2F, 0.2F);
-
-        if (player1ax) {
-            ax = 1;
-            zero = 10;
-        }
-
-
-        player1 = players[0];
-        player2 = players[1];
-        p1 = (TextView) findViewById(R.id.playerone);
-        p2 = (TextView) findViewById(R.id.playertwo);
-
-        p1.setText(player1);
-        p2.setText(player2);
-        Toast.makeText(this, "" + player1 + "\'s turn", Toast.LENGTH_SHORT).show();
-        Utils.AdUtils.showSDKXBannerAd(
-                this,
-                getString(R.string.SDKXBottomId)
-        );
-    }
+    InterstitialAd gameAd;
 
 
     private void vib(int i, boolean makeSound) {
@@ -617,6 +570,70 @@ public class Afterstart extends AppCompatActivity {
         resetchecker++;
     }
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.content_afterstart);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        q1 = findViewById(R.id.u00);
+        q2 = findViewById(R.id.u01);
+        q3 = findViewById(R.id.u02);
+        q4 = findViewById(R.id.m00);
+        q5 = findViewById(R.id.m01);
+        q6 = findViewById(R.id.m02);
+        q7 = findViewById(R.id.b00);
+        q8 = findViewById(R.id.b01);
+        q9 = findViewById(R.id.b02);
+        loadGameAd();
+        checkerlist.add(q1);
+        checkerlist.add(q2);
+        checkerlist.add(q3);
+        checkerlist.add(q4);
+        checkerlist.add(q5);
+        checkerlist.add(q6);
+        checkerlist.add(q7);
+        checkerlist.add(q8);
+        checkerlist.add(q9);
+        Intent intent = getIntent();
+        if (intent != null) {
+            CharSequence[] players = intent.getCharSequenceArrayExtra("playersnames");
+            player1ax = intent.getBooleanExtra("player1ax", true);
+            selectedsingleplayer = intent.getBooleanExtra("selectedsingleplayer", true);
+            gameId = intent.getExtras().getString("gameId", null);
+            easy = intent.getBooleanExtra("easy", false);
+            medium = intent.getBooleanExtra("medium", false);
+            hard = intent.getBooleanExtra("hard", false);
+            impossible = intent.getBooleanExtra("impossible", false);
+
+
+            mp = MediaPlayer.create(this, R.raw.pencilsound);
+            mp.setVolume(0.2F, 0.2F);
+
+            if (player1ax) {
+                ax = 1;
+                zero = 10;
+            }
+
+
+            player1 = players[0];
+            player2 = players[1];
+            p1 = (TextView) findViewById(R.id.playerone);
+            p2 = (TextView) findViewById(R.id.playertwo);
+
+            p1.setText(player1);
+            p2.setText(player2);
+            Toast.makeText(this, "" + player1 + "\'s turn", Toast.LENGTH_SHORT).show();
+            Utils.AdUtils.showBannerAd(
+                    this,
+                    getString(R.string.BasicBannerId)
+            );
+            MainActivity.Companion.reshadeLines(this);
+        } else {
+            Toast.makeText(getApplicationContext(), "Some Issues Occured", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
 
     public void showDialog(String whoWon, String scoreWon, String whoLose, String scoreLose) {
         vib(500, false);
@@ -627,9 +644,9 @@ public class Afterstart extends AppCompatActivity {
 //        TextView playerOneScore = dialog.findViewById(R.id.player_one_score);
 //        TextView playerTwoScore = dialog.findViewById(R.id.player_two_score);
         TextView titleText = dialog.findViewById(R.id.title_text);
-        Utils.AdUtils.showSDKXBannerAd(
+        Utils.AdUtils.showBannerAd(
                 this,
-                getString(R.string.SDKXBottomId),
+                getString(R.string.DialogBannerId),
                 dialog.findViewById(R.id.dialogbannerAdFrame)
         );
         dialog.setCancelable(false);
@@ -642,21 +659,68 @@ public class Afterstart extends AppCompatActivity {
         Button resetButton = dialog.findViewById(R.id.reset_button);
         Button playAgainButton = dialog.findViewById(R.id.play_again_button);
 
-        resetButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.dismiss();
-                doreset();
-            }
+        resetButton.setOnClickListener(view -> {
+//            playReset(dialog);
+            getLoad(dialog, 0);
         });
 
-        playAgainButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.dismiss();
-                playmore();
-            }
+        playAgainButton.setOnClickListener(view -> {
+            getLoad(dialog, 1);
         });
+    }
+
+    private void loadGameAd() {
+        InterstitialAd.load(
+                this,
+                getString(R.string.InGameIntersId),
+                new AdRequest.Builder().build(),
+                new InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                        super.onAdLoaded(interstitialAd);
+                        gameAd = interstitialAd;
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        super.onAdFailedToLoad(loadAdError);
+                        gameAd = null;
+                    }
+                });
+    }
+
+    private void getLoad(Dialog dialog, int i) {
+        playMore(dialog, i);
+        if (gameAd != null) {
+            gameAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+                @Override
+                public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
+                    super.onAdFailedToShowFullScreenContent(adError);
+                    loadGameAd();
+                }
+
+                @Override
+                public void onAdDismissedFullScreenContent() {
+                    super.onAdDismissedFullScreenContent();
+                    loadGameAd();
+                }
+            });
+            gameAd.show(Afterstart.this);
+        }
+    }
+
+    private void playReset(Dialog dialog) {
+        dialog.dismiss();
+        doreset();
+    }
+
+    private void playMore(Dialog dialog, int i) {
+        if (i == 1) {
+            dialog.dismiss();
+            playmore();
+        } else {
+            playReset(dialog);
+        }
     }
 
     public void winchecker() {
@@ -860,9 +924,9 @@ public class Afterstart extends AppCompatActivity {
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_layout_exit);
         dialog.setCancelable(false);
-        Utils.AdUtils.showSDKXBannerAd(
+        Utils.AdUtils.showBannerAd(
                 this,
-                getString(R.string.SDKXBottomId),
+                getString(R.string.DialogBannerId),
                 dialog.findViewById(R.id.dialogbannerAdFrame)
         );
 
@@ -871,20 +935,12 @@ public class Afterstart extends AppCompatActivity {
         Button exit = dialog.findViewById(R.id.yes_button);
         final Button dismiss = dialog.findViewById(R.id.no_button);
 
-        exit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                doreset();
-                finish();
-            }
+        exit.setOnClickListener(view -> {
+            doreset();
+            finish();
         });
 
-        dismiss.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.dismiss();
-            }
-        });
+        dismiss.setOnClickListener(view -> dialog.dismiss());
     }
 
     @Override

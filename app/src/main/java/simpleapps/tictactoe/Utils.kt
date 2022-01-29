@@ -7,8 +7,6 @@ import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -22,9 +20,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.greedygame.core.adview.general.AdLoadCallback
-import com.greedygame.core.adview.general.GGAdview
-import com.greedygame.core.models.general.AdErrors
 import org.jetbrains.annotations.Nullable
 import org.json.JSONObject
 
@@ -208,6 +203,7 @@ object Utils {
         }
 
 
+/*
         @JvmStatic
         fun showSDKXBannerAd(activity: Activity, adId: String) {
             val v = activity.findViewById<FrameLayout>(R.id.bannerAdFrame)
@@ -241,7 +237,9 @@ object Utils {
                 }
             })
         }
+*/
 
+/*
         @JvmStatic
         fun showSDKXBannerAd(activity: Activity, adId: String, v: FrameLayout) {
             val ggAdView = GGAdview(activity).apply {
@@ -274,5 +272,6 @@ object Utils {
                 }
             })
         }
+*/
     }
 }

@@ -5,10 +5,10 @@
     <color name="primaryDarkColor">#bb4151</color>
     <color name="secondaryColor">#f24607</color>
     <color name="secondaryLightColor">#ff7a3d</color>
-    <color name="secondaryDarkColor">#b70000</color>
+    <color name="secondaryDarkColor">#C19393</color>
     <color name="primaryTextColor">#000000</color>
     <color name="secondaryTextColor">#000000</color>
-    <color name="bgTsColor">#BFFDF8F8</color>
-    <color name="bgOpposite">#FFF</color>
-    <color name="bgText">#000</color>
+    <color name="bgTsColor">#4D000000</color>
+    <color name="bgOpposite">#000</color>
+    <color name="bgText">#FFF</color>
 </resources>

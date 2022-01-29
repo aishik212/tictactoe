@@ -1,6 +1,7 @@
 package simpleapps.tictactoe;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -17,8 +18,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.ads.AdError;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -115,6 +120,34 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         sanitize_game_db(Utils.getDatabase(getApplicationContext()), uid);
     }
 
+    InterstitialAd gameAd;
+
+    private void dismissDialog(Dialog dialog) {
+        if (dialog != null) {
+            try {
+                dialog.dismiss();
+            } catch (Exception e) {
+
+            }
+        }
+    }
+
+    private void vib(int i, boolean makeSound) {
+        Vibrator myVib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
+        myVib.vibrate(i);
+        if (makeSound && mp != null) {
+            mp.start();
+        }
+    }
+
+    private void updateOnDB(String s) {
+        skippable = false;
+        if (!dbUpdate) {
+            gameChild.child(s).setValue(mAuth.getCurrentUser().getUid());
+        }
+        dbUpdate = false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -150,199 +183,98 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         checkerlist.add(q7);
         checkerlist.add(q8);
         checkerlist.add(q9);
-        CharSequence[] players = getIntent().getCharSequenceArrayExtra("playersnames");
-        player1ax = getIntent().getBooleanExtra("player1ax", true);
-        selectedsingleplayer = getIntent().getBooleanExtra("selectedsingleplayer", true);
-        gameId = getIntent().getExtras().getString("gameId", null);
-        easy = getIntent().getBooleanExtra("easy", false);
-        medium = getIntent().getBooleanExtra("medium", false);
-        hard = getIntent().getBooleanExtra("hard", false);
-        impossible = getIntent().getBooleanExtra("impossible", false);
+        Intent intent = getIntent();
+        if (intent != null) {
 
-        mp = MediaPlayer.create(this, R.raw.pencilsound);
-        mp.setVolume(0.2F, 0.2F);
 
-        player1 = players[0];
-        player2 = players[1];
+            CharSequence[] players = intent.getCharSequenceArrayExtra("playersnames");
+            player1ax = intent.getBooleanExtra("player1ax", true);
+            selectedsingleplayer = intent.getBooleanExtra("selectedsingleplayer", true);
+            gameId = intent.getExtras().getString("gameId", null);
+            easy = intent.getBooleanExtra("easy", false);
+            medium = intent.getBooleanExtra("medium", false);
+            hard = intent.getBooleanExtra("hard", false);
+            impossible = intent.getBooleanExtra("impossible", false);
 
-        startsWith = gameId.startsWith(uid);
-        if (gameId != null && startsWith) {
-            flag = 0;
-            enableAll();
-            ax = 1;
-            zero = 10;
-        } else {
-            flag = 1;
-            disableAll();
-            ax = 10;
-            zero = 1;
-        }
+            mp = MediaPlayer.create(this, R.raw.pencilsound);
+            mp.setVolume(0.2F, 0.2F);
 
-        p1 = findViewById(R.id.playerone);
-        p2 = findViewById(R.id.playertwo);
+            player1 = players[0];
+            player2 = players[1];
 
-        p1.setText(player1);
-        p2.setText(player2);
+            startsWith = gameId.startsWith(uid);
+            if (gameId != null && startsWith) {
+                flag = 0;
+                enableAll();
+                ax = 1;
+                zero = 10;
+            } else {
+                flag = 1;
+                disableAll();
+                ax = 10;
+                zero = 1;
+            }
 
-        Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
-        DatabaseReference game = Utils.getDatabase(this).child("game");
-        if (gameId != null) {
-            gameChild = game.child(gameId);
-            Log.d("texts", "onCreate: " + gameId);
-            gameListener = new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    Log.d("texts", "onDataChange: " + snapshot.getValue());
-                    if (snapshot.getValue() != null) {
-                        if (snapshot.getValue().equals("reset")) {
-                            gameChild.removeEventListener(gameListener);
-                            dismissDialog(dialog);
-                            Toast.makeText(AfterstartOnline.this, "User Left the Game", Toast.LENGTH_SHORT).show();
-                            doreset();
-                            finish();
-                        } else if (snapshot.getValue().equals("again")) {
-                            dismissDialog(dialog);
-                            playmore();
-                        } else {
-                            for (DataSnapshot s : snapshot.getChildren()) {
-                                String key = s.getKey();
-                                String v = s.getValue().toString();
-                                Log.d("texts", "onDataChange: " + v + " " + mAuth.getCurrentUser().getUid());
-                                if (key != null && key.length() == 2 && !v.equals(mAuth.getCurrentUser().getUid())) {
-                                    Log.d("texts", "onDataChange: " + key + " " + v);
-                                    Log.d("texts", "onDataChange: aaaa " + key);
-                                    dbUpdate = false;
-                                    //Should not Update DB dbUpdate = false
-                                    pany(key);
+            p1 = findViewById(R.id.playerone);
+            p2 = findViewById(R.id.playertwo);
+
+            p1.setText(player1);
+            p2.setText(player2);
+
+            Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
+            DatabaseReference game = Utils.getDatabase(this).child("game");
+            if (gameId != null) {
+                gameChild = game.child(gameId);
+                gameListener = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Log.d("texts", "onDataChange: 1 " + snapshot.getValue());
+                        if (snapshot.getValue() != null) {
+                            if (snapshot.getValue().equals("reset")) {
+                                gameChild.removeEventListener(gameListener);
+                                Toast.makeText(AfterstartOnline.this, "User Left the Game", Toast.LENGTH_SHORT).show();
+                                getLoad(dialog, 0);
+//                                dismissDialog(dialog);
+//                                doreset();
+                                finish();
+                            } else if (snapshot.getValue().equals("again")) {
+                                getLoad(dialog, 1);
+//                                dismissDialog(dialog);
+//                                playmore();
+                            } else {
+                                for (DataSnapshot s : snapshot.getChildren()) {
+                                    String key = s.getKey();
+                                    String v = s.getValue().toString();
+                                    Log.d("texts", "onDataChange: 2 " + v + " " + mAuth.getCurrentUser().getUid());
+                                    if (key != null && key.length() == 2 && !v.equals(mAuth.getCurrentUser().getUid())) {
+                                        Log.d("texts", "onDataChange: 3 " + key + " " + v);
+                                        Log.d("texts", "onDataChange: aaaa " + key);
+                                        dbUpdate = false;
+                                        //Should not Update DB dbUpdate = false
+                                        pany(key);
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    Log.d("texts", "onCancelled: " + error.getDetails());
-                }
-            };
-            gameChild.addValueEventListener(gameListener);
-        }
-        Utils.AdUtils.showSDKXBannerAd(
-                this,
-                getString(R.string.SDKXBottomId)
-        );
-
-    }
-
-    private void dismissDialog(Dialog dialog) {
-        if (dialog != null) {
-            try {
-                dialog.dismiss();
-            } catch (Exception e) {
-
-            }
-        }
-    }
-
-    private void vib(int i, boolean makeSound) {
-        Vibrator myVib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
-        myVib.vibrate(i);
-        if (makeSound && mp != null) {
-            mp.start();
-        }
-    }
-
-    private void updateOnDB(String s) {
-        skippable = false;
-        if (!dbUpdate) {
-            gameChild.child(s).setValue(mAuth.getCurrentUser().getUid());
-        }
-        dbUpdate = false;
-    }
-
-    public void pany(String location) {
-        location = location.trim();
-        String[] split = location.trim().split("", 0);
-//        updateOnDB(location);
-        skippable = false;
-        Log.d("texts", "pany: " + dbUpdate);
-        if (dbUpdate) {/*If need to update DB*/
-            disableAll();
-            try {
-                String finalLocation = location;
-                gameChild.child(location).setValue(mAuth.getCurrentUser().getUid()).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        Log.d("texts", "onComplete: ");
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.d("texts", "onCancelled: " + error.getDetails());
                     }
-                }).addOnSuccessListener(unused -> {
-                    Log.d("texts", "onSuccess: ");
-                    vib(60, true);
-                    /**
-                     * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
-                     * so that it doesn't outputs wrong value
-                     */
-                    int patch = 0;
-                    if (finalLocation.length() < split.length) {
-                        patch = split.length - finalLocation.length();
-                    }
-                    int xval = Integer.parseInt(split[patch]);
-                    int yval = Integer.parseInt(split[1 + patch]);
-                    if (win == 0 && buttonpressed[xval][yval] == 0) {
-                        if (flag % 2 == 0)
-                            tracker[xval][yval] = ax;
-                        else
-                            tracker[xval][yval] = zero;
-
-                        printBoard();
-                        winchecker();
-                        cpuplay();
-                        flag++;
-                        if (xval == 0) {
-                            buttonpressed[xval][yval]++;
-                        } else {
-                            ++buttonpressed[xval][yval];
-                        }
-                    }
-                }).addOnFailureListener(e -> Log.d("texts", "onFailure: " + e.getLocalizedMessage()))
-                        .addOnCanceledListener(() -> Log.d("texts", "onCanceled: "));
-            } catch (Exception e) {
-                Log.d("texts", "pany: " + e.getLocalizedMessage());
+                };
+                gameChild.addValueEventListener(gameListener);
             }
+            Utils.AdUtils.showBannerAd(
+                    this,
+                    getString(R.string.BasicBannerId)
+            );
+            MainActivity.Companion.reshadeLines(this);
         } else {
-            Log.d("texts", "pany: B");
-            vib(60, true);
-            /**
-             * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
-             * so that it doesnt outputs wrong value
-             */
-            int patch = 0;
-            if (location.length() < split.length) {
-                patch = split.length - location.length();
-            }
-            Log.d("texts", "pany: " + location + " " + Arrays.toString(split) + " " + patch);
-            int xval = Integer.parseInt(split[patch]);
-            Log.d("texts", "pany: a " + xval);
-            int yval = Integer.parseInt(split[1 + patch]);
-            Log.d("texts", "pany: b " + yval);
-            Log.d("texts", "pany: c " + win + " " + buttonpressed[xval][yval] + " " + flag + " " + (flag % 2));
-            if (win == 0 && buttonpressed[xval][yval] == 0) {
-                if (flag % 2 == 0)
-                    tracker[xval][yval] = ax;
-                else
-                    tracker[xval][yval] = zero;
-                printBoard();
-                winchecker();
-                cpuplay();
-                flag++;
-                if (xval == 0) {
-                    buttonpressed[xval][yval]++;
-                } else {
-                    ++buttonpressed[xval][yval];
-                }
-            }
+            Toast.makeText(getApplicationContext(), "Some Issues Occured", Toast.LENGTH_SHORT).show();
+            finish();
         }
-        dbUpdate = false;
+        loadGameAd();
     }
 
     public void p00(View view) {
@@ -941,6 +873,87 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    public void pany(String location) {
+        location = location.trim();
+        String[] split = location.trim().split("", 0);
+//        updateOnDB(location);
+        skippable = false;
+        Log.d("texts", "pany: " + dbUpdate);
+        if (dbUpdate) {/*If need to update DB*/
+            disableAll();
+            try {
+                String finalLocation = location;
+                gameChild.child(location).setValue(mAuth.getCurrentUser().getUid())
+                        .addOnSuccessListener(unused -> {
+                            Log.d("texts", "onSuccess: ");
+                            vib(60, true);
+                            /**
+                             * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
+                             * so that it doesn't outputs wrong value
+                             */
+                            int patch = 0;
+                            if (finalLocation.length() < split.length) {
+                                patch = split.length - finalLocation.length();
+                            }
+                            int xval = Integer.parseInt(split[patch]);
+                            int yval = Integer.parseInt(split[1 + patch]);
+                            if (win == 0 && buttonpressed[xval][yval] == 0) {
+                                if (flag % 2 == 0)
+                                    tracker[xval][yval] = ax;
+                                else
+                                    tracker[xval][yval] = zero;
+
+                                printBoard();
+                                winchecker();
+                                cpuplay();
+                                flag++;
+                                if (xval == 0) {
+                                    buttonpressed[xval][yval]++;
+                                } else {
+                                    ++buttonpressed[xval][yval];
+                                }
+                            }
+                        }).addOnFailureListener(e -> Log.d("texts", "onFailure: " + e.getLocalizedMessage()))
+                        .addOnCanceledListener(() -> Log.d("texts", "onCanceled: "));
+            } catch (Exception e) {
+                Log.d("texts", "pany: " + e.getLocalizedMessage());
+            }
+        } else {
+            Log.d("texts", "pany: B");
+            vib(60, true);
+            /**
+             * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
+             * so that it doesnt outputs wrong value
+             */
+            int patch = 0;
+            if (location.length() < split.length) {
+                patch = split.length - location.length();
+            }
+            Log.d("texts", "pany: " + location + " " + Arrays.toString(split) + " " + patch);
+            int xval = Integer.parseInt(split[patch]);
+            Log.d("texts", "pany: a " + xval);
+            int yval = Integer.parseInt(split[1 + patch]);
+            Log.d("texts", "pany: b " + yval);
+            Log.d("texts", "pany: c " + win + " " + buttonpressed[xval][yval] + " " + flag + " " + (flag % 2));
+            if (win == 0 && buttonpressed[xval][yval] == 0) {
+                if (flag % 2 == 0)
+                    tracker[xval][yval] = ax;
+                else
+                    tracker[xval][yval] = zero;
+                printBoard();
+                winchecker();
+                cpuplay();
+                flag++;
+                if (xval == 0) {
+                    buttonpressed[xval][yval]++;
+                } else {
+                    ++buttonpressed[xval][yval];
+                }
+            }
+        }
+        dbUpdate = false;
+    }
+
     public void showDialog(String whoWon, String scoreWon, String whoLose, String scoreLose) {
         destroyTimer();
         vib(500, false);
@@ -951,9 +964,9 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
 //        TextView playerOneScore = dialog.findViewById(R.id.player_one_score);
 //        TextView playerTwoScore = dialog.findViewById(R.id.player_two_score);
         TextView titleText = dialog.findViewById(R.id.title_text);
-        Utils.AdUtils.showSDKXBannerAd(
+        Utils.AdUtils.showBannerAd(
                 this,
-                getString(R.string.SDKXBottomId),
+                getString(R.string.DialogBannerId),
                 dialog.findViewById(R.id.dialogbannerAdFrame)
         );
 
@@ -971,21 +984,76 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         Button resetButton = dialog.findViewById(R.id.reset_button);
         Button playAgainButton = dialog.findViewById(R.id.play_again_button);
         resetButton.setText("End Game");
-        resetButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dismissDialog(dialog);
-                showExitDialog();
-            }
+        resetButton.setOnClickListener(view -> {
+//                dismissDialog(dialog);
+//                showExitDialog();
+            getLoad(dialog, 0);
         });
 
-        playAgainButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dismissDialog(dialog);
-                playmore();
-            }
+        playAgainButton.setOnClickListener(view -> {
+//                dismissDialog(dialog);
+//                playmore();
+            getLoad(dialog, 1);
         });
+    }
+
+    private void loadGameAd() {
+        InterstitialAd.load(
+                this,
+                getString(R.string.InGameIntersId),
+                new AdRequest.Builder().build(),
+                new InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                        super.onAdLoaded(interstitialAd);
+                        gameAd = interstitialAd;
+                        Log.d("texts", "onAdLoaded: ");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        super.onAdFailedToLoad(loadAdError);
+                        gameAd = null;
+                        Log.d("texts", "onAdFailedToLoad: " + loadAdError.toString());
+                    }
+                });
+    }
+
+    private void getLoad(Dialog dialog, int i) {
+        if (gameAd != null) {
+            gameAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+                @Override
+                public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
+                    super.onAdFailedToShowFullScreenContent(adError);
+                    loadGameAd();
+                    playMore(dialog, i);
+                }
+
+                @Override
+                public void onAdDismissedFullScreenContent() {
+                    super.onAdDismissedFullScreenContent();
+                    loadGameAd();
+                    playMore(dialog, i);
+                }
+            });
+            gameAd.show(AfterstartOnline.this);
+        } else {
+            playMore(dialog, i);
+        }
+    }
+
+    private void playReset(Dialog dialog) {
+        dismissDialog(dialog);
+        showExitDialog();
+    }
+
+    private void playMore(Dialog dialog, int i) {
+        if (i == 1) {
+            dismissDialog(dialog);
+            playmore();
+        } else {
+            playReset(dialog);
+        }
     }
 
     private void destroyTimer() {
@@ -1246,9 +1314,9 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         dialog = new Dialog(AfterstartOnline.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_layout_exit);
-        Utils.AdUtils.showSDKXBannerAd(
+        Utils.AdUtils.showBannerAd(
                 this,
-                getString(R.string.SDKXBottomId),
+                getString(R.string.DialogBannerId),
                 dialog.findViewById(R.id.dialogbannerAdFrame)
         );
         dialog.setCancelable(false);

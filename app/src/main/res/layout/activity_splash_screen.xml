@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bgOpposite"
     android:fitsSystemWindows="true"
     tools:context="simpleapps.tictactoe.SplashScreen">
 
@@ -25,6 +26,7 @@
         android:gravity="center"
         android:text="Tic Tac Toe"
         android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/bgText"
         android:textSize="34sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -39,6 +41,7 @@
         android:gravity="center"
         android:text="Kata Kuti"
         android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/bgText"
         android:textSize="50dp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -52,6 +55,7 @@
         android:layout_height="wrap_content"
         android:text="Loading Resources...."
         android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+        android:textColor="@color/bgText"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

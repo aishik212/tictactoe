@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/white"
     android:clickable="true"
+    android:elevation="11dp"
     android:onClick="onClick">
 
     <FrameLayout

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.WindowManager
@@ -26,6 +27,13 @@ class SplashScreen : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+/*
+        if (BuildConfig.DEBUG) {
+            goToMainAct()
+        } else {
+            showAppOpenAd()
+        }
+*/
         showAppOpenAd()
 /*
         Handler().postDelayed({
@@ -46,12 +54,11 @@ class SplashScreen : AppCompatActivity() {
                 override fun onAdLoaded(ad: AppOpenAd) {
                     ad.show(this@SplashScreen)
                     ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdShowedFullScreenContent() {
-                            super.onAdShowedFullScreenContent()
-                        }
 
                         override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                             super.onAdFailedToShowFullScreenContent(p0)
+                            Log.d("texts", "onAdFailedToShowFullScreenContent: " + p0.message)
+                            Log.d("texts", "onAdFailedToShowFullScreenContent: " + p0.code)
                             hideLoad()
                             goToMainAct()
                         }
@@ -74,6 +81,8 @@ class SplashScreen : AppCompatActivity() {
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    Log.d("texts", "onAdFailedToShowFullScreenContent: " + loadAdError.message)
+                    Log.d("texts", "onAdFailedToShowFullScreenContent: " + loadAdError.code)
                     hideLoad()
                     goToMainAct()
                 }
