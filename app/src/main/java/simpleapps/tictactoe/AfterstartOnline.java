@@ -1,5 +1,7 @@
 package simpleapps.tictactoe;
 
+import static simpleapps.tictactoe.Utils.getDatabase;
+
 import android.app.Dialog;
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -31,7 +33,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
@@ -67,18 +69,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
 
     ValueEventListener gameListener;
 
-    private void sanitize_game_db(
-            DatabaseReference database,
-            String uid
-    ) {
-        database.child("matches").child(uid).removeValue();
-        database.child("game").child(gameId).removeValue();
-        try {
-            gameChild.removeEventListener(gameListener);
-        } catch (Exception e) {
-            Log.d("texts", "sanitize_game_db: " + e.getLocalizedMessage());
-        }
-    }
+    int adCount = 0;
 
     @Override
     protected void onPause() {
@@ -86,7 +77,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         try {
             gameChild.removeEventListener(gameListener);
         } catch (Exception e) {
-            Log.d("texts", "sanitize_game_db: " + e.getLocalizedMessage());
         }
     }
 
@@ -96,28 +86,30 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         removeThenAddListener();
     }
 
-    String TAG = "texts";
-
     private void removeThenAddListener() {
         try {
             gameChild.removeEventListener(gameListener);
         } catch (Exception e) {
-            Log.d("texts", "sanitize_game_db: " + e.getLocalizedMessage());
         }
         try {
             gameChild.addValueEventListener(gameListener);
         } catch (Exception e) {
-            Log.d("texts", "sanitize_game_db: " + e.getLocalizedMessage());
         }
     }
 
     String uid;
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        destroyTimer();
-        sanitize_game_db(Utils.getDatabase(getApplicationContext()), uid);
+    private void sanitize_game_db(
+            DatabaseReference database,
+            String uid
+    ) {
+        database.child("matches").child(uid).removeValue();
+        database.child("game").child(gameId).removeValue();
+        try {
+            gameChild.removeEventListener(gameListener);
+        } catch (Exception e) {
+
+        }
     }
 
     InterstitialAd gameAd;
@@ -149,132 +141,10 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.content_afterstart_online);
-        mAuth = Utils.getMAuth();
-        if (mAuth == null) {
-            finish();
-        } else {
-            uid = mAuth.getUid();
-        }
-        if (uid == null) {
-            finish();
-        }
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        q1 = findViewById(R.id.u00);
-        q2 = findViewById(R.id.u01);
-        q3 = findViewById(R.id.u02);
-        q4 = findViewById(R.id.m00);
-        q5 = findViewById(R.id.m01);
-        q6 = findViewById(R.id.m02);
-        q7 = findViewById(R.id.b00);
-        q8 = findViewById(R.id.b01);
-        q9 = findViewById(R.id.b02);
-        turn_tv = findViewById(R.id.turn_tv);
-        turn_tv.setVisibility(View.VISIBLE);
-        checkerlist.add(q1);
-        checkerlist.add(q2);
-        checkerlist.add(q3);
-        checkerlist.add(q4);
-        checkerlist.add(q5);
-        checkerlist.add(q6);
-        checkerlist.add(q7);
-        checkerlist.add(q8);
-        checkerlist.add(q9);
-        Intent intent = getIntent();
-        if (intent != null) {
-
-
-            CharSequence[] players = intent.getCharSequenceArrayExtra("playersnames");
-            player1ax = intent.getBooleanExtra("player1ax", true);
-            selectedsingleplayer = intent.getBooleanExtra("selectedsingleplayer", true);
-            gameId = intent.getExtras().getString("gameId", null);
-            easy = intent.getBooleanExtra("easy", false);
-            medium = intent.getBooleanExtra("medium", false);
-            hard = intent.getBooleanExtra("hard", false);
-            impossible = intent.getBooleanExtra("impossible", false);
-
-            mp = MediaPlayer.create(this, R.raw.pencilsound);
-            mp.setVolume(0.2F, 0.2F);
-
-            player1 = players[0];
-            player2 = players[1];
-
-            startsWith = gameId.startsWith(uid);
-            if (gameId != null && startsWith) {
-                flag = 0;
-                enableAll();
-                ax = 1;
-                zero = 10;
-            } else {
-                flag = 1;
-                disableAll();
-                ax = 10;
-                zero = 1;
-            }
-
-            p1 = findViewById(R.id.playerone);
-            p2 = findViewById(R.id.playertwo);
-
-            p1.setText(player1);
-            p2.setText(player2);
-
-            Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
-            DatabaseReference game = Utils.getDatabase(this).child("game");
-            if (gameId != null) {
-                gameChild = game.child(gameId);
-                gameListener = new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        Log.d("texts", "onDataChange: 1 " + snapshot.getValue());
-                        if (snapshot.getValue() != null) {
-                            if (snapshot.getValue().equals("reset")) {
-                                gameChild.removeEventListener(gameListener);
-                                Toast.makeText(AfterstartOnline.this, "User Left the Game", Toast.LENGTH_SHORT).show();
-                                getLoad(dialog, 0);
-//                                dismissDialog(dialog);
-//                                doreset();
-                                finish();
-                            } else if (snapshot.getValue().equals("again")) {
-                                getLoad(dialog, 1);
-//                                dismissDialog(dialog);
-//                                playmore();
-                            } else {
-                                for (DataSnapshot s : snapshot.getChildren()) {
-                                    String key = s.getKey();
-                                    String v = s.getValue().toString();
-                                    Log.d("texts", "onDataChange: 2 " + v + " " + mAuth.getCurrentUser().getUid());
-                                    if (key != null && key.length() == 2 && !v.equals(mAuth.getCurrentUser().getUid())) {
-                                        Log.d("texts", "onDataChange: 3 " + key + " " + v);
-                                        Log.d("texts", "onDataChange: aaaa " + key);
-                                        dbUpdate = false;
-                                        //Should not Update DB dbUpdate = false
-                                        pany(key);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.d("texts", "onCancelled: " + error.getDetails());
-                    }
-                };
-                gameChild.addValueEventListener(gameListener);
-            }
-            Utils.AdUtils.showBannerAd(
-                    this,
-                    getString(R.string.BasicBannerId)
-            );
-            MainActivity.Companion.reshadeLines(this);
-        } else {
-            Toast.makeText(getApplicationContext(), "Some Issues Occured", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-        loadGameAd();
+    protected void onDestroy() {
+        super.onDestroy();
+        destroyTimer();
+        sanitize_game_db(getDatabase(getApplicationContext()), uid);
     }
 
     public void p00(View view) {
@@ -744,8 +614,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     public void printBoard() {
-        Log.d("texts", "printBoard: " + Arrays.deepToString(tracker));
-
         if (tracker[0][0] == 1) q1.setImageResource(R.drawable.x);
         if (tracker[0][0] == 10) q1.setImageResource(R.drawable.oo);
 
@@ -787,8 +655,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         for (int i = 0; i < tracker.length; i++) {
             for (int j = 0; j < tracker[0].length; j++) {
                 if (tracker[i][j] == 0) {
-                    Log.d("texts", "clickRandom: " + i + "" + j);
-                    Log.d("texts", "onDataChange: bbbb " + i + "" + j);
                     dbUpdate = true;
                     //Should Update DB dbUpdate = true
                     pany(i + "" + j);
@@ -799,7 +665,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     private void checkCurrentUser() {
-        Log.d("texts", "checkCurrentUser: ");
         if (gameId.startsWith(uid)) {
             if (flag == 0) {
                 disableAll();
@@ -830,7 +695,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
             @Override
             public void onTick(long l) {
                 runOnUiThread(() -> {
-                    Log.d("texts", "onTick: " + l);
                     if (skippable) {
                         turn_tv.setText("Your Turn " + (l) / 1000 + " Seconds Left");
                     } else {
@@ -841,7 +705,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
 
             @Override
             public void onFinish() {
-                Log.d("texts", "onFinish: " + skippable);
                 if (skippable) {
                     ctd = null;
                     clickRandom();
@@ -854,7 +717,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     private void disableAll() {
-        Log.d("texts", "disableAll: ");
         skippable = false;
         skipAfter10Seconds();
         turn_tv.setText("Opponents Turn");
@@ -864,7 +726,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     }
 
     private void enableAll() {
-        Log.d("texts", "enableAll: ");
         skippable = true;
         skipAfter10Seconds();
         turn_tv.setText("Your Turn");
@@ -873,19 +734,141 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.content_afterstart_online);
+        mAuth = Utils.getMAuth();
+        if (mAuth == null) {
+            finish();
+        } else {
+            uid = mAuth.getUid();
+        }
+        if (uid == null) {
+            finish();
+        }
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        q1 = findViewById(R.id.u00);
+        q2 = findViewById(R.id.u01);
+        q3 = findViewById(R.id.u02);
+        q4 = findViewById(R.id.m00);
+        q5 = findViewById(R.id.m01);
+        q6 = findViewById(R.id.m02);
+        q7 = findViewById(R.id.b00);
+        q8 = findViewById(R.id.b01);
+        q9 = findViewById(R.id.b02);
+        turn_tv = findViewById(R.id.turn_tv);
+        turn_tv.setVisibility(View.VISIBLE);
+        checkerlist.add(q1);
+        checkerlist.add(q2);
+        checkerlist.add(q3);
+        checkerlist.add(q4);
+        checkerlist.add(q5);
+        checkerlist.add(q6);
+        checkerlist.add(q7);
+        checkerlist.add(q8);
+        checkerlist.add(q9);
+        Intent intent = getIntent();
+        if (intent != null) {
+
+
+            CharSequence[] players = intent.getCharSequenceArrayExtra("playersnames");
+            player1ax = intent.getBooleanExtra("player1ax", true);
+            selectedsingleplayer = intent.getBooleanExtra("selectedsingleplayer", true);
+            gameId = intent.getExtras().getString("gameId", null);
+            easy = intent.getBooleanExtra("easy", false);
+            medium = intent.getBooleanExtra("medium", false);
+            hard = intent.getBooleanExtra("hard", false);
+            impossible = intent.getBooleanExtra("impossible", false);
+
+            mp = MediaPlayer.create(this, R.raw.pencilsound);
+            mp.setVolume(0.2F, 0.2F);
+
+            player1 = players[0];
+            player2 = players[1];
+
+            startsWith = gameId.startsWith(uid);
+            if (gameId != null && startsWith) {
+                flag = 0;
+                enableAll();
+                ax = 1;
+                zero = 10;
+            } else {
+                flag = 1;
+                disableAll();
+                ax = 10;
+                zero = 1;
+            }
+
+            p1 = findViewById(R.id.playerone);
+            p2 = findViewById(R.id.playertwo);
+
+            p1.setText(player1);
+            p2.setText(player2);
+
+            Toast.makeText(this, "" + player1 + "'s turn", Toast.LENGTH_SHORT).show();
+            DatabaseReference game = getDatabase(this).child("game");
+            if (gameId != null) {
+                gameChild = game.child(gameId);
+                gameListener = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.getValue() != null) {
+                            if (snapshot.getValue().equals("reset")) {
+                                gameChild.removeEventListener(gameListener);
+                                Toast.makeText(AfterstartOnline.this, "User Left the Game", Toast.LENGTH_SHORT).show();
+                                getLoad(dialog, 0);
+//                                dismissDialog(dialog);
+//                                doreset();
+                                finish();
+                            } else if (snapshot.getValue().equals("again")) {
+                                getLoad(dialog, 1);
+//                                dismissDialog(dialog);
+//                                playmore();
+                            } else {
+                                for (DataSnapshot s : snapshot.getChildren()) {
+                                    String key = s.getKey();
+                                    String v = s.getValue().toString();
+                                    if (key != null && key.length() == 2 && !v.equals(mAuth.getCurrentUser().getUid())) {
+                                        dbUpdate = false;
+                                        //Should not Update DB dbUpdate = false
+                                        pany(key);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                    }
+                };
+                gameChild.addValueEventListener(gameListener);
+            }
+            Utils.AdUtils.showBannerAd(
+                    this,
+                    getString(R.string.BasicBannerId)
+            );
+            MainActivity.Companion.reshadeLines(this);
+        } else {
+            Toast.makeText(getApplicationContext(), "Some Issues Occured", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+        loadGameAd();
+    }
+
     public void pany(String location) {
         location = location.trim();
         String[] split = location.trim().split("", 0);
 //        updateOnDB(location);
         skippable = false;
-        Log.d("texts", "pany: " + dbUpdate);
         if (dbUpdate) {/*If need to update DB*/
             disableAll();
             try {
                 String finalLocation = location;
                 gameChild.child(location).setValue(mAuth.getCurrentUser().getUid())
                         .addOnSuccessListener(unused -> {
-                            Log.d("texts", "onSuccess: ");
                             vib(60, true);
                             /**
                              * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
@@ -913,13 +896,11 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
                                     ++buttonpressed[xval][yval];
                                 }
                             }
-                        }).addOnFailureListener(e -> Log.d("texts", "onFailure: " + e.getLocalizedMessage()))
-                        .addOnCanceledListener(() -> Log.d("texts", "onCanceled: "));
+                        });
             } catch (Exception e) {
-                Log.d("texts", "pany: " + e.getLocalizedMessage());
+
             }
         } else {
-            Log.d("texts", "pany: B");
             vib(60, true);
             /**
              * This is a weird issue on asus zenfone android 9 Device so needed to add this patch
@@ -929,12 +910,8 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
             if (location.length() < split.length) {
                 patch = split.length - location.length();
             }
-            Log.d("texts", "pany: " + location + " " + Arrays.toString(split) + " " + patch);
             int xval = Integer.parseInt(split[patch]);
-            Log.d("texts", "pany: a " + xval);
             int yval = Integer.parseInt(split[1 + patch]);
-            Log.d("texts", "pany: b " + yval);
-            Log.d("texts", "pany: c " + win + " " + buttonpressed[xval][yval] + " " + flag + " " + (flag % 2));
             if (win == 0 && buttonpressed[xval][yval] == 0) {
                 if (flag % 2 == 0)
                     tracker[xval][yval] = ax;
@@ -957,6 +934,9 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     public void showDialog(String whoWon, String scoreWon, String whoLose, String scoreLose) {
         destroyTimer();
         vib(500, false);
+        if (whoWon.equals("You won!") && !selectedsingleplayer) {
+            addScore(uid);
+        }
 
         dialog = new Dialog(AfterstartOnline.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -974,7 +954,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         try {
             dialog.show();
         } catch (Exception e) {
-            Log.d("texts", "showDialog: " + e.getLocalizedMessage());
         }
 
         titleText.setText(whoWon);
@@ -997,26 +976,60 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
         });
     }
 
-    private void loadGameAd() {
-        InterstitialAd.load(
-                this,
-                getString(R.string.InGameIntersId),
-                new AdRequest.Builder().build(),
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
-                        super.onAdLoaded(interstitialAd);
-                        gameAd = interstitialAd;
-                        Log.d("texts", "onAdLoaded: ");
-                    }
+    private void addScore(String uid) {
+        DatabaseReference database = getDatabase(getApplicationContext());
+        HashMap<String, String> userData = new HashMap<>();
+        userData.put("name", FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+        String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+        int i = email.indexOf("@");
+        email = email.substring(0, 2) + "*****" + email.substring(i);
+        userData.put("email", email);
+        database.child("SCOREBOARD").child(uid).push().setValue("");
+        updateHighScore(uid, database.child("SCOREBOARD"), userData);
+    }
 
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        super.onAdFailedToLoad(loadAdError);
-                        gameAd = null;
-                        Log.d("texts", "onAdFailedToLoad: " + loadAdError.toString());
-                    }
-                });
+    private void updateHighScore(String uid, DatabaseReference database, HashMap<String, String> userData) {
+        database.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.hasChildren()) {
+                    userData.put("score", "" + snapshot.getChildrenCount());
+                    database.child("SCORES").child(uid).setValue(userData);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void loadGameAd() {
+        Log.d("texts", "loadGameAd: " + adCount);
+        if (adCount == 0) {
+            InterstitialAd.load(
+                    this,
+                    getString(R.string.InGameIntersId),
+                    new AdRequest.Builder().build(),
+                    new InterstitialAdLoadCallback() {
+                        @Override
+                        public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                            super.onAdLoaded(interstitialAd);
+                            gameAd = interstitialAd;
+                        }
+
+                        @Override
+                        public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                            super.onAdFailedToLoad(loadAdError);
+                            gameAd = null;
+                        }
+                    });
+        }
+        adCount++;
+        if (adCount == 5) {
+            adCount = 0;
+        }
     }
 
     private void getLoad(Dialog dialog, int i) {
@@ -1086,28 +1099,26 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
             if (sum[i] == 3 || sum[i] == 30) {
                 win++;
                 if ((sum[i] == 3) && (ax == 1)) {
-                    Log.d("texts", "winchecker: A PLAYER WON");
-                    Log.d("texts", "winchecker: " + startsWith + " " + gameId);
                     if (selectedsingleplayer) {
                         MediaPlayer winSound = MediaPlayer.create(this, R.raw.winsound);
                         winSound.setVolume(0.4F, 0.4F);
                         winSound.start();
                     }
                     score1++;
-                    showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
+                    //CORRECTED
+                    showDialog("You won!", "" + score1, "" + player2, "" + score2);
                     TextView q1 = findViewById(R.id.p1score);
                     q1.setText("" + score1);
 
                 }
                 if ((sum[i] == 3) && (zero == 1)) {
-                    Log.d("texts", "winchecker: B");
-                    Log.d("texts", "winchecker: " + startsWith + " " + gameId);
                     if (startsWith) {
                         score2++;
                         showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
                         TextView q1 = findViewById(R.id.p2score);
                         q1.setText("" + score2);
                     } else {
+                        //CORRECT
                         score1++;
                         showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
                         TextView q1 = findViewById(R.id.p1score);
@@ -1116,8 +1127,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
 
                 }
                 if ((sum[i] == 30) && (ax == 10)) {
-                    Log.d("texts", "winchecker: C");
-                    Log.d("texts", "winchecker: " + startsWith + " " + gameId);
                     if (startsWith) {
                         score1++;
                         showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
@@ -1125,6 +1134,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
                         q1.setText("" + score1);
                     } else {
                         score2++;
+                        //CORRECT
                         showDialog("You won!", "" + score2, "" + player1, "" + score1);
                         TextView q1 = findViewById(R.id.p2score);
                         q1.setText("" + score2);
@@ -1132,8 +1142,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
 
                 }
                 if ((sum[i] == 30) && (zero == 10)) {
-                    Log.d("texts", "winchecker: D CPU WON");
-                    Log.d("texts", "winchecker: " + startsWith + " " + gameId);
                     if (selectedsingleplayer) {
                         MediaPlayer winSound = MediaPlayer.create(this, R.raw.losesound);
                         winSound.setVolume(0.4F, 0.4F);
@@ -1141,6 +1149,7 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
                     }
                     if (startsWith) {
                         score2++;
+                        //CORRECT
                         showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
                         TextView q1 = findViewById(R.id.p2score);
                         q1.setText("" + score2);
@@ -1211,7 +1220,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
             win = 0;
             summ = 0;
             ctrflag = 0;
-            Log.d("texts", "playmore: game - " + game + ", flag - " + flag + " " + ((game + 2) % 2));
             if (gameId != null && startsWith) {
                 if (((game + 2) % 2) == 0) {
                     flag = 1;
@@ -1352,7 +1360,6 @@ public class AfterstartOnline extends AppCompatActivity implements View.OnClickL
     @Override
     public void onClick(View view) {
         if (view.getTag() != null) {
-            Log.d("texts", "onDataChange: cccc " + view.getTag().toString());
             dbUpdate = true;
             //Should Update DB dbUpdate = true
             pany(view.getTag().toString());

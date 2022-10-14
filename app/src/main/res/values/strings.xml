@@ -10,13 +10,24 @@
 
     <!--    ADMOB START -->
     <string name="admobAppId">ca-app-pub-5453528366471630~2622415133</string>
-    <string name="appOpenID">ca-app-pub-5453528366471630/7480972025</string>
+
+    <string name="HighappOpenID">ca-app-pub-5453528366471630/7480972025</string>
+    <string name="AllappOpenID">ca-app-pub-5453528366471630/6878124416</string>
+    <string name="MedappOpenID">ca-app-pub-5453528366471630/8003218419</string>
+
     <string name="BasicBannerId">ca-app-pub-5453528366471630/5485765084</string>
     <string name="DialogBannerId">ca-app-pub-5453528366471630/2662737146</string>
     <string name="ExitDialogBannerId">ca-app-pub-5453528366471630/9633154388</string>
     <string name="SearchBannerId">ca-app-pub-5453528366471630/9688994702</string>
+
     <string name="ExitIntersId">ca-app-pub-5453528366471630/8461858733</string>
     <string name="InGameIntersId">ca-app-pub-5453528366471630/5531943990</string>
+
+    <string name="HighRinsID">ca-app-pub-5453528366471630/9366317269</string>
+    <string name="MedRinsID">ca-app-pub-5453528366471630/1539798137</string>
+    <string name="AllRinsID">ca-app-pub-5453528366471630/8831168632</string>
+
+
     <string name="tcmessage">By Using this App you accept to our terms and Conditions and Privacy Policy. Click Here to Read our Terms and Conditions and Privacy Policy</string>
     <!--    ADMOB END -->
 

@@ -14,7 +14,6 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -28,7 +27,10 @@ import androidx.core.view.allViews
 import com.android.billingclient.api.*
 import com.android.billingclient.api.BillingClient.SkuType.INAPP
 import com.bumptech.glide.Glide
-import com.google.android.gms.ads.*
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -44,17 +46,12 @@ import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
-import com.greedygame.core.AppConfig
-import com.greedygame.core.GreedyGameAds
 import de.hdodenhof.circleimageview.CircleImageView
-import org.json.JSONObject
 import simpleapps.tictactoe.ChangeBoardColor.Companion.purchases
 import simpleapps.tictactoe.ChangeBoardColor.Companion.purchasesUpdatedListener
 import simpleapps.tictactoe.Utils.AdUtils.showBannerAd
 import simpleapps.tictactoe.Utils.G_CODE
 import simpleapps.tictactoe.Utils.LoginMethod
-import simpleapps.tictactoe.Utils.TAG
-import simpleapps.tictactoe.Utils.adResult
 import simpleapps.tictactoe.Utils.gameViewType
 import simpleapps.tictactoe.Utils.login
 import simpleapps.tictactoe.Utils.mAuth
@@ -75,7 +72,7 @@ class MainActivity : Activity(), View.OnClickListener {
     var singleplayer: RadioButton? = null
     var twoplayer: RadioButton? = null
     var player1ax = true
-    var selectedSinglePlayer = false
+    var selectedSinglePlayer = true
     var easy = true
     var medium = false
     var hard = false
@@ -254,7 +251,6 @@ class MainActivity : Activity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         //apply the animation ( fade In ) to your LAyout
-        initializeAds()
         val options = getSharedPreferences("options", 0)
         openCount = options?.getInt("open_count", 0) ?: 0
         options?.edit()?.putInt("open_count", ++openCount)?.apply()
@@ -408,6 +404,12 @@ class MainActivity : Activity(), View.OnClickListener {
 
             }
         })
+        loadExitIAD()
+        showBannerAd(
+            this,
+            getString(R.string.BasicBannerId)
+        )
+        showBannerAd(this, getString(R.string.BasicBannerId))
     }
 
     private fun loadExitIAD() {
@@ -430,20 +432,58 @@ class MainActivity : Activity(), View.OnClickListener {
 
     var iad: InterstitialAd? = null
     override fun onBackPressed() {
+        val textView = findViewById<TextView>(R.id.loading_tv)
         if (iad != null) {
+            try {
+                textView.visibility = VISIBLE
+            } catch (e: Exception) {
+
+            }
+
             iad?.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                     super.onAdFailedToShowFullScreenContent(p0)
+                    try {
+                        textView.visibility = GONE
+                    } catch (e: Exception) {
+
+                    }
                     showExitDialog()
                 }
 
                 override fun onAdDismissedFullScreenContent() {
                     super.onAdDismissedFullScreenContent()
+                    try {
+                        textView.visibility = GONE
+                    } catch (e: Exception) {
+
+                    }
                     showExitDialog()
                 }
+
+                override fun onAdShowedFullScreenContent() {
+                    super.onAdShowedFullScreenContent()
+                    try {
+                        textView.visibility = GONE
+                    } catch (e: Exception) {
+
+                    }
+                }
             }
-            iad?.show(this)
+            object : CountDownTimer(1500, 500) {
+                override fun onTick(millisUntilFinished: Long) {
+                }
+
+                override fun onFinish() {
+                    iad?.show(this@MainActivity)
+                }
+            }.start()
         } else {
+            try {
+                textView.visibility = GONE
+            } catch (e: Exception) {
+
+            }
             showExitDialog()
         }
     }
@@ -489,27 +529,6 @@ class MainActivity : Activity(), View.OnClickListener {
         FirebaseAnalytics.getInstance(applicationContext).logEvent(eventName, bundle)
     }
 
-    private fun initializeAds() {
-        val testDeviceIds = RequestConfiguration.Builder()
-            .setTestDeviceIds(listOf("09AD52B9FAF1C347EEC02EF796DE4BE0")).build()
-        MobileAds.setRequestConfiguration(testDeviceIds)
-        MobileAds.initialize(
-            this
-        ) {
-            showBannerAd(
-                this,
-                getString(R.string.BasicBannerId)
-            )
-            val appConfig: AppConfig = AppConfig.Builder(this)
-                .withAppId(getString(R.string.SDKXAppId))  //Replace the app ID with your app's ID
-                .build()
-            GreedyGameAds.initWith(appConfig)
-            showBannerAd(this, getString(R.string.BasicBannerId))
-            loadExitIAD()
-        }
-
-
-    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -525,17 +544,13 @@ class MainActivity : Activity(), View.OnClickListener {
         remoteConfig.setConfigSettingsAsync(configSettings)
         remoteConfig.fetchAndActivate().addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
-                adResult = JSONObject(remoteConfig.getString("showAds"))
-                initializeAds()
                 gameViewType = remoteConfig.getLong("games_view_type")
                 setGameView(this)
             } else {
-                initializeAds()
                 setGameView(this)
 
             }
         }.addOnFailureListener {
-            initializeAds()
             setGameView(this)
         }
     }
@@ -590,7 +605,6 @@ class MainActivity : Activity(), View.OnClickListener {
                                 }
                             }
                         } catch (e: Exception) {
-                            Log.d("texts", "onItemSelected: " + e.localizedMessage)
                         }
 
                     }
@@ -653,14 +667,13 @@ class MainActivity : Activity(), View.OnClickListener {
             3 -> impossible = true
             else -> medium = true
         }
-        if (!selectedSinglePlayer) {
-            if (player2.isEmpty()) {
-                player2 = "player 2"
-            }
+        if (!selectedSinglePlayer && player2.isEmpty()) {
+            player2 = "player 2"
         }
         if (player1.isEmpty()) {
             player1 = "player 1"
         }
+
 
         val players = arrayOf(mAuth?.currentUser?.email ?: "You", "Other Player")
         i.putExtra("easy", easy)
@@ -670,6 +683,7 @@ class MainActivity : Activity(), View.OnClickListener {
         i.putExtra("playersnames", players)
         i.putExtra("player1ax", true)
         i.putExtra("selectedsingleplayer", true)
+        i.putExtra("type", "ONLINE_BOT")
         logGameEvent("online_bot")
         findViewById<View>(R.id.startOnline).isEnabled = true
         startActivity(i)
@@ -686,10 +700,6 @@ class MainActivity : Activity(), View.OnClickListener {
                     firebaseAuthWithGoogle(idToken)
                 }
             } catch (e: ApiException) {
-                Log.d(
-                    "texts",
-                    "onActivityResult: " + e.localizedMessage + " " + e.message + " " + e.status + " " + e.statusCode
-                )
             }
         }
     }
@@ -704,7 +714,6 @@ class MainActivity : Activity(), View.OnClickListener {
                     updateUI(user, true)
                 } else {
                     // If sign in fails, display a message to the user.
-                    Log.d(TAG, "signInWithCredential:failure", task.exception)
                     updateUI(null, false)
                 }
             }
@@ -762,7 +771,6 @@ class MainActivity : Activity(), View.OnClickListener {
 
                 override fun onServiceDisconnected(name: ComponentName?) {
                     mClient = null
-                    Log.d("texts", "onServiceDisconnected: ")
                 }
             })
         CustomTabsClient.connectAndInitialize(applicationContext, packageName)
@@ -842,9 +850,7 @@ class MainActivity : Activity(), View.OnClickListener {
                 R.id.startOnline -> {
                     //True if logged in
                     if (checkLogin()) {
-                        Log.d("texts", "onClick: a" + p0.isEnabled)
                         p0.isEnabled = false
-                        Log.d("texts", "onClick: " + p0.isEnabled)
                         searchUser()
                     } else {
 //                        if not logged in
@@ -886,16 +892,9 @@ class MainActivity : Activity(), View.OnClickListener {
             sanitize_user_db(database, uid)
             listener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    Log.d("texts", "onDataChange: 222")
-                    Log.d("texts", "onDataChange: " + snapshot.ref)
-                    Log.d(
-                        "texts",
-                        "onDataChange: 4 " + snapshot.value + " " + snapshot.childrenCount
-                    )
                     val displayName = mAuth?.currentUser?.displayName ?: "Anonymous"
                     val waitingRef = database.child("waiting")
                     if (snapshot.childrenCount > 0) {
-                        Log.d("texts", "onDataChange: AA")
                         val first = snapshot.children.first()
                         val key = first.key.toString()
                         val name = first.child("name").value.toString()
@@ -909,33 +908,23 @@ class MainActivity : Activity(), View.OnClickListener {
                         matchData["p1"] = "$displayName(p1)"
                         matchData["p2"] = "$name(p2)"
                         matchRef.child(key).setValue(matchData).addOnSuccessListener {
-                            Log.d("texts", "onDataChange: A")
                             matchRef.child(uid).setValue(matchData).addOnSuccessListener {
-                                Log.d("texts", "onDataChange: B")
                                 checkForMatches()
                                 showLoader()
                             }
                         }
                         removeWaitListener()
                     } else {
-                        Log.d("texts", "onDataChange: BB")
                         val uid1 = mAuth?.currentUser?.uid
-                        Log.d("texts", "onDataChange: " + uid1)
-                        Log.d("texts", "onDataChange: " + waitingRef)
-                        Log.d("texts", "onDataChange: " + displayName)
                         val child1 = waitingRef
                             .child(uid1 + "")
                             .child("name")
-                        Log.d("texts", "onDataChange: " + child1)
-                        Log.d("texts", "onDataChange: aaaa")
-
                         child1.setValue("$displayName",
                             object : DatabaseReference.CompletionListener {
                                 override fun onComplete(
                                     error: DatabaseError?,
                                     ref: DatabaseReference
                                 ) {
-                                    Log.d("texts", "onDataChange: ")
                                     checkForMatches()
                                     showLoader()
                                 }
@@ -949,12 +938,10 @@ class MainActivity : Activity(), View.OnClickListener {
                     }.addOnFailureListener {
                         Log.d("texts", "onDataChange: " + it.localizedMessage)
                     }*/
-                        Log.d("texts", "onDataChange: bbbb")
                     }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    Log.d("texts", "onCancelled: " + error.details)
                 }
             }
             database.child("waiting")
@@ -967,17 +954,16 @@ class MainActivity : Activity(), View.OnClickListener {
         showBannerAd(
             this,
             getString(R.string.BasicBannerId),
-            (findViewById<FrameLayout>(R.id.searchBannerAdFrame))
+            (findViewById(R.id.searchBannerAdFrame))
         )
         startLoader()
     }
 
     var ctdRandom: CountDownTimer? = null
     private fun startLoader() {
-        ctdRandom = object : CountDownTimer(15000, 1000) {
+        ctdRandom = object : CountDownTimer(if (BuildConfig.DEBUG) 5000 else 15000, 1000) {
             override fun onTick(p0: Long) {
                 val l = p0 / 1000
-                Log.d("texts", "onTick: $p0 $l")
                 if (l < 2L) {
                     ctdRandom?.cancel()
                     startRandomCPUgame()
@@ -1006,7 +992,6 @@ class MainActivity : Activity(), View.OnClickListener {
         try {
             child?.removeEventListener(value!!)
         } catch (e: Exception) {
-            Log.d("texts", "hideLoader: " + e.localizedMessage)
         }
     }
 
@@ -1016,13 +1001,10 @@ class MainActivity : Activity(), View.OnClickListener {
         uid: String
     ) {
         try {
-            Log.d("texts", "sanitize_user_db: " + database.child("waiting").child(uid).ref)
             database.child("waiting").child(uid).removeValue().addOnFailureListener {
-                Log.d("texts", "sanitize_user_db: " + it.localizedMessage)
             }
             database.child("matches").child(uid).removeValue()
         } catch (e: Exception) {
-            Log.d("texts", "sanitize_user_db: " + e.localizedMessage)
         }
     }
 
@@ -1030,11 +1012,9 @@ class MainActivity : Activity(), View.OnClickListener {
     var value: ValueEventListener? = null
 
     private fun checkForMatches() {
-        Log.d("texts", "checkForMatches: ")
         child = Utils.getDatabase(this@MainActivity).child("matches").child(mAuth?.uid + "")
         value = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                Log.d("texts", "onDataChange: 111")
                 if (snapshot.value != null) {
                     child?.removeEventListener(this)
                     hideLoader()
@@ -1062,7 +1042,6 @@ class MainActivity : Activity(), View.OnClickListener {
                     i.putExtra("gameId", "$gameID")
                     logGameEvent("online")
                     findViewById<View>(R.id.startOnline).isEnabled = true
-                    Log.d("texts", "onDataChange: startE")
                     startActivity(i)
                 }
             }
@@ -1077,7 +1056,6 @@ class MainActivity : Activity(), View.OnClickListener {
                 child?.addValueEventListener(value as ValueEventListener)
             }
         } catch (e: Exception) {
-            Log.d("texts", "checkForMatches: " + e.localizedMessage)
         }
     }
 

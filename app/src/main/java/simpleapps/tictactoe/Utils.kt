@@ -2,26 +2,32 @@ package simpleapps.tictactoe
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Color
+import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.view.setMargins
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.appopen.AppOpenAd.AppOpenAdLoadCallback
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import org.jetbrains.annotations.Nullable
-import org.json.JSONObject
 
 
 object Utils {
@@ -32,7 +38,6 @@ object Utils {
 
     const val G_CODE = 1;
     const val F_CODE = 2;
-    const val TAG = "texts";
 
     @JvmStatic
     var mAuth: FirebaseAuth? = null
@@ -70,7 +75,6 @@ object Utils {
     }
 
     @JvmStatic
-    var adResult: JSONObject? = null
     var gameViewType: Long = 1
     fun setGameView(activity: Activity) {
         val view1 = activity.findViewById<View>(R.id.gamel1)
@@ -107,7 +111,7 @@ object Utils {
             }
             val request = AdRequest.Builder().build()
             AppOpenAd.load(
-                activity, activity.getString(R.string.appOpenID), request,
+                activity, activity.getString(R.string.HighappOpenID), request,
                 AppOpenAd.APP_OPEN_AD_ORIENTATION_PORTRAIT, loadCallback
             )
         }
@@ -117,67 +121,83 @@ object Utils {
         fun showBannerAd(activity: Activity, adId: String) {
             try {
                 val view = activity.findViewById<FrameLayout>(R.id.bannerAdFrame)
-                if (adResult != null && adResult!!.getBoolean("banner")) {
-                    val adView = AdView(activity)
-                    adView.adUnitId = adId
-                    adView.adSize = getAdSize(activity.windowManager, view, activity)
-                    val adRequest = AdRequest
-                        .Builder()
-                        .build()
-                    adView.adListener = object : AdListener() {
-                        override fun onAdFailedToLoad(p0: LoadAdError) {
-                            super.onAdFailedToLoad(p0)
-                            Log.d("texts", "onAdFailedToLoad: " + p0.message)
-                            view.visibility = GONE
-                        }
-
-                        override fun onAdLoaded() {
-                            super.onAdLoaded()
-                            view.removeAllViews()
-                            view.addView(adView)
-                            view.visibility = VISIBLE
-                        }
+                val adView = AdView(activity)
+                view.removeAllViews()
+                val textView = getLoadingView(activity)
+                view.removeAllViews()
+                view.setBackgroundColor(ContextCompat.getColor(activity, R.color.primaryColor))
+                view.addView(textView)
+                view.visibility = VISIBLE
+                adView.adUnitId = adId
+                adView.setAdSize(getAdSize(activity.windowManager, view, activity))
+                val adRequest = AdRequest
+                    .Builder()
+                    .build()
+                adView.adListener = object : AdListener() {
+                    override fun onAdFailedToLoad(p0: LoadAdError) {
+                        super.onAdFailedToLoad(p0)
+                        view.visibility = GONE
                     }
-                    adView.loadAd(adRequest)
+
+                    override fun onAdLoaded() {
+                        super.onAdLoaded()
+                        view.removeAllViews()
+                        view.addView(adView)
+                        view.visibility = VISIBLE
+                    }
+                }
+                adView.loadAd(adRequest)
+                /*if (adResult != null && adResult!!.getBoolean("banner")) {
                 } else {
                     view.visibility = GONE
-                }
+                }*/
             } catch (e: Exception) {
-                Log.d("texts", "showBannerAd: " + e.localizedMessage)
             }
 
         }
 
-        @JvmStatic
-        fun showBannerAd(activity: Activity, adId: String, v: FrameLayout) {
-            try {
-                if (adResult != null && adResult!!.getBoolean("banner")) {
-                    val adView = AdView(activity)
-                    adView.adUnitId = adId
-                    adView.adSize = getAdSize(activity.windowManager, v, activity)
-                    val adRequest = AdRequest
-                        .Builder()
-                        .build()
-                    adView.adListener = object : AdListener() {
-                        override fun onAdFailedToLoad(p0: LoadAdError) {
-                            super.onAdFailedToLoad(p0)
-                            Log.d("texts", "onAdFailedToLoad: " + p0.message)
-                            v.visibility = GONE
-                        }
+        private fun getLoadingView(activity: Activity): TextView {
+            val textView = TextView(activity)
+            textView.text = "Loading Ad..."
+            textView.gravity = Gravity.CENTER
+            textView.textSize = 24F
+            textView.setTextColor(Color.BLACK)
+            textView.setBackgroundColor(Color.WHITE)
+            val layoutParams: FrameLayout.LayoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 200)
+            layoutParams.setMargins(1)
+            textView.layoutParams = layoutParams
+            return textView
+        }
 
-                        override fun onAdLoaded() {
-                            super.onAdLoaded()
-                            v.removeAllViews()
-                            v.addView(adView)
-                            v.visibility = VISIBLE
-                        }
+        @JvmStatic
+        fun showBannerAd(activity: Activity, adId: String, view: FrameLayout) {
+            try {
+                val adView = AdView(activity)
+                adView.adUnitId = adId
+                adView.setAdSize(getAdSize(activity.windowManager, view, activity))
+                val adRequest = AdRequest
+                    .Builder()
+                    .build()
+                val textView = getLoadingView(activity)
+                view.removeAllViews()
+                view.addView(textView)
+                view.setBackgroundColor(ContextCompat.getColor(activity, R.color.primaryColor))
+                view.visibility = VISIBLE
+                adView.adListener = object : AdListener() {
+                    override fun onAdFailedToLoad(p0: LoadAdError) {
+                        super.onAdFailedToLoad(p0)
+                        view.visibility = GONE
                     }
-                    adView.loadAd(adRequest)
-                } else {
-                    v.visibility = GONE
+
+                    override fun onAdLoaded() {
+                        super.onAdLoaded()
+                        view.removeAllViews()
+                        view.addView(adView)
+                        view.visibility = VISIBLE
+                    }
                 }
+                adView.loadAd(adRequest)
             } catch (e: Exception) {
-                Log.d("texts", "showBannerAd: " + e.localizedMessage)
             }
 
         }
@@ -203,75 +223,34 @@ object Utils {
         }
 
 
-/*
-        @JvmStatic
-        fun showSDKXBannerAd(activity: Activity, adId: String) {
-            val v = activity.findViewById<FrameLayout>(R.id.bannerAdFrame)
-            val ggAdView = GGAdview(activity).apply {
-                unitId = adId  //Replace with your Ad Unit ID here
-                adsMaxHeight = 250 //Value is in pixels, not in dp
+        fun logAdResult(
+            adType: String?,
+            errorAdType: String?,
+            error: String?,
+            activity: Activity?,
+        ) {
+            var error = error
+            val b = Bundle()
+            try {
+                error = error!!.substring(0, 25)
+            } catch (e: java.lang.Exception) {
             }
-
-            val layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, 200)
-            v.addView(ggAdView, layoutParams)
-            ggAdView.loadAd(object : AdLoadCallback {
-                override fun onAdLoaded() {
-                    v.visibility = VISIBLE
-                }
-
-                override fun onAdLoadFailed(cause: AdErrors) {
-                    v.visibility = GONE
-                    Log.d("texts", "Ad Load Failed $cause")
-                }
-
-                override fun onUiiOpened() {
-                    Log.d("texts", "Uii Opened")
-                }
-
-                override fun onUiiClosed() {
-                    Log.d("texts", "Uii Closed")
-                }
-
-                override fun onReadyForRefresh() {
-                    Log.d("texts", "Ad ready for refresh")
-                }
-            })
-        }
-*/
-
-/*
-        @JvmStatic
-        fun showSDKXBannerAd(activity: Activity, adId: String, v: FrameLayout) {
-            val ggAdView = GGAdview(activity).apply {
-                unitId = adId  //Replace with your Ad Unit ID here
-                adsMaxHeight = 250 //Value is in pixels, not in dp
+            if (adType != null) {
+                b.putString("AdType", adType)
             }
-
-            val layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, 200)
-            v.addView(ggAdView, layoutParams)
-            ggAdView.loadAd(object : AdLoadCallback {
-                override fun onAdLoaded() {
-                    v.visibility = VISIBLE
+            if (error != null && errorAdType != null) {
+                b.putString("Error", errorAdType)
+                b.putString("ErrorMessage", "$errorAdType $error")
+            }
+            Log.d("texts", "logAdResult: " + adType + " " + error + " " + errorAdType)
+            if (activity != null) {
+                FirebaseAnalytics.getInstance(activity).logEvent("AdLog", b)
+                if (adType != null && adType == "AdKinowa") {
+                    val bundle = Bundle()
+                    bundle.putString("AdKinowa", "Success")
+                    FirebaseAnalytics.getInstance(activity).logEvent("AdKinowa", bundle)
                 }
-
-                override fun onAdLoadFailed(cause: AdErrors) {
-                    v.visibility = GONE
-                    Log.d("texts", "Ad Load Failed $cause")
-                }
-
-                override fun onUiiOpened() {
-                    Log.d("texts", "Uii Opened")
-                }
-
-                override fun onUiiClosed() {
-                    Log.d("texts", "Uii Closed")
-                }
-
-                override fun onReadyForRefresh() {
-                    Log.d("texts", "Ad ready for refresh")
-                }
-            })
+            }
         }
-*/
     }
 }

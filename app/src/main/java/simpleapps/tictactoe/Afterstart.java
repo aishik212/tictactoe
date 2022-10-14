@@ -1,5 +1,7 @@
 package simpleapps.tictactoe;
 
+import static simpleapps.tictactoe.Utils.getDatabase;
+
 import android.app.Dialog;
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -23,8 +25,15 @@ import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
@@ -570,6 +579,9 @@ public class Afterstart extends AppCompatActivity {
         resetchecker++;
     }
 
+    String type = "OFFLINE";
+    int adCount = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -600,13 +612,22 @@ public class Afterstart extends AppCompatActivity {
             CharSequence[] players = intent.getCharSequenceArrayExtra("playersnames");
             player1ax = intent.getBooleanExtra("player1ax", true);
             selectedsingleplayer = intent.getBooleanExtra("selectedsingleplayer", true);
+            type = intent.getStringExtra("type");
+            if (type == null) {
+                type = "OFFLINE";
+            }
+            Log.d("texts", "onCreate: " + type);
             gameId = intent.getExtras().getString("gameId", null);
             easy = intent.getBooleanExtra("easy", false);
             medium = intent.getBooleanExtra("medium", false);
             hard = intent.getBooleanExtra("hard", false);
             impossible = intent.getBooleanExtra("impossible", false);
-
-
+            if (BuildConfig.DEBUG) {
+                easy = true;
+                medium = false;
+                hard = false;
+                impossible = false;
+            }
             mp = MediaPlayer.create(this, R.raw.pencilsound);
             mp.setVolume(0.2F, 0.2F);
 
@@ -635,9 +656,56 @@ public class Afterstart extends AppCompatActivity {
         }
     }
 
-    public void showDialog(String whoWon, String scoreWon, String whoLose, String scoreLose) {
-        vib(500, false);
+    private void addScore() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            String uid = currentUser.getUid();
+            DatabaseReference database = getDatabase(getApplicationContext());
+            HashMap<String, String> userData = new HashMap<>();
+            userData.put("name", FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+            String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+            int i = email.indexOf("@");
+            email = email.substring(0, 2) + "*****" + email.substring(i);
+            userData.put("email", email);
+            database.child("SCOREBOARD").child(uid).push().setValue("");
+            updateHighScore(uid, database.child("SCOREBOARD"), userData);
+        }
+    }
 
+    private void addScore(String uid) {
+        DatabaseReference database = getDatabase(getApplicationContext());
+        HashMap<String, String> userData = new HashMap<>();
+        userData.put("name", FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+        String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+        int i = email.indexOf("@");
+        email = email.substring(0, 2) + "*****" + email.substring(i);
+        userData.put("email", email);
+        database.child("SCOREBOARD").child(uid).push().setValue("");
+        updateHighScore(uid, database.child("SCOREBOARD"), userData);
+    }
+
+    private void updateHighScore(String uid, DatabaseReference database, HashMap<String, String> userData) {
+        database.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.hasChildren()) {
+                    userData.put("score", "" + snapshot.getChildrenCount());
+                    database.child("SCORES").child(uid).setValue(userData);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    public void showDialog(String whoWon, String scoreWon, String whoLose, String scoreLose) {
+        if (whoWon.equals("You won!") && type.equals("ONLINE_BOT")) {
+            addScore();
+        }
+        vib(500, false);
         final Dialog dialog = new Dialog(Afterstart.this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_layout);
@@ -670,26 +738,34 @@ public class Afterstart extends AppCompatActivity {
     }
 
     private void loadGameAd() {
-        InterstitialAd.load(
-                this,
-                getString(R.string.InGameIntersId),
-                new AdRequest.Builder().build(),
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
-                        super.onAdLoaded(interstitialAd);
-                        gameAd = interstitialAd;
-                    }
+        Log.d("texts", "loadGameAd: " + adCount);
+        if (adCount == 0) {
+            InterstitialAd.load(
+                    this,
+                    getString(R.string.InGameIntersId),
+                    new AdRequest.Builder().build(),
+                    new InterstitialAdLoadCallback() {
+                        @Override
+                        public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                            super.onAdLoaded(interstitialAd);
+                            gameAd = interstitialAd;
+                        }
 
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        super.onAdFailedToLoad(loadAdError);
-                        gameAd = null;
-                    }
-                });
+                        @Override
+                        public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                            super.onAdFailedToLoad(loadAdError);
+                            gameAd = null;
+                        }
+                    });
+        }
+        adCount++;
+        if (adCount == 5) {
+            adCount = 0;
+        }
     }
 
     private void getLoad(Dialog dialog, int i) {
+        Log.d("texts", "getLoad: " + gameAd);
         playMore(dialog, i);
         if (gameAd != null) {
             gameAd.setFullScreenContentCallback(new FullScreenContentCallback() {
@@ -750,14 +826,17 @@ public class Afterstart extends AppCompatActivity {
                         winSound.setVolume(0.4F, 0.4F);
                         winSound.start();
                     }
-                    showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
+                    if (type.equals("ONLINE_BOT")) {
+                        showDialog("You won!", "" + score1, "" + player2, "" + score2);
+                    } else {
+                        showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
+                    }
 
                 }
                 if ((sum[i] == 3) && (zero == 1)) {
                     score2++;
                     TextView q1 = findViewById(R.id.p2score);
                     q1.setText("" + score2);
-                    Log.d("texts", "winchecker: B");
                     showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
 
                 }
@@ -765,7 +844,6 @@ public class Afterstart extends AppCompatActivity {
                     score1++;
                     TextView q1 = findViewById(R.id.p1score);
                     q1.setText("" + score1);
-                    Log.d("texts", "winchecker: C");
                     showDialog("" + player1 + " won!", "" + score1, "" + player2, "" + score2);
 
                 }
@@ -773,12 +851,12 @@ public class Afterstart extends AppCompatActivity {
                     score2++;
                     TextView q1 = findViewById(R.id.p2score);
                     q1.setText("" + score2);
-                    Log.d("texts", "winchecker: D CPU WON");
                     if (selectedsingleplayer) {
                         MediaPlayer winSound = MediaPlayer.create(this, R.raw.losesound);
                         winSound.setVolume(0.4F, 0.4F);
                         winSound.start();
                     }
+                    //CORRECT
                     showDialog("" + player2 + " won!", "" + score2, "" + player1, "" + score1);
 
                 }
@@ -786,8 +864,8 @@ public class Afterstart extends AppCompatActivity {
             }
 
         if ((ctrflag == 9) && (win == 0)) {
+            //CORRECT
             showDialog("This is a draw !", "" + score1, "" + player2, "" + score2);
-
             drawchecker++;
         }
 

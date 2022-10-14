@@ -2,7 +2,6 @@ package simpleapps.tictactoe
 
 import android.app.Activity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -42,10 +41,6 @@ class ChangeBoardColor : AppCompatActivity() {
                                 billingClient?.acknowledgePurchase(
                                     acknowledgePurchaseParams.build()
                                 ) { p0 ->
-                                    Log.d(
-                                        "texts",
-                                        "onAcknowledgePurchaseResponse: " + p0.responseCode
-                                    )
                                     val b1 = Bundle()
                                     b1.putString("buyFlow", "ACK_SUCCESS")
                                     b1.putString("buyItem", purchase.skus[0])
@@ -57,7 +52,6 @@ class ChangeBoardColor : AppCompatActivity() {
                                         Snackbar.LENGTH_LONG
                                     ).show()
                                     val activity = activitya
-                                    Log.d("texts", ": $activity")
                                     if (activity != null) {
                                         saveExit(inflate.colorSpinner, activity)
                                     }
