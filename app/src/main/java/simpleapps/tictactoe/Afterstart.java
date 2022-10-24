@@ -1,5 +1,6 @@
 package simpleapps.tictactoe;
 
+import static com.simpleapps.admaster.AdUtils.TestRewardedInterstitialAd;
 import static simpleapps.tictactoe.Utils.getDatabase;
 
 import android.app.Dialog;
@@ -31,8 +32,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.simpleapps.admaster.AdUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -581,11 +584,13 @@ public class Afterstart extends AppCompatActivity {
 
     String type = "OFFLINE";
     int adCount = 0;
+    List<Integer> adList = Arrays.asList(R.string.HighRinsID, R.string.MedRinsID);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_afterstart);
+        AdUtils.Companion.loadStartAdByType(this, adList);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         q1 = findViewById(R.id.u00);
@@ -738,8 +743,13 @@ public class Afterstart extends AppCompatActivity {
     }
 
     private void loadGameAd() {
-        Log.d("texts", "loadGameAd: " + adCount);
         if (adCount == 0) {
+            AdUtils.Companion.loadStartAdByType(this, adList);
+            if (TestRewardedInterstitialAd != null) {
+                TestRewardedInterstitialAd.show(this, rewardItem -> {
+
+                });
+            }
             InterstitialAd.load(
                     this,
                     getString(R.string.InGameIntersId),

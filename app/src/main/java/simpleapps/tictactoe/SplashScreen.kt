@@ -17,6 +17,7 @@ import com.google.android.gms.ads.*
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
+import com.simpleapps.admaster.AdUtils
 import simpleapps.tictactoe.Utils.AdUtils.logAdResult
 import simpleapps.tictactoe.databinding.ActivitySplashScreenBinding
 
@@ -66,23 +67,35 @@ class SplashScreen : AppCompatActivity() {
     }
 
     private fun initializeAds() {
+        val appOpenAdMobAds = listOf(R.string.HighappOpenID, R.string.MedappOpenID)
+        val adList = listOf(
+            AdUtils.Companion.SplashAdObject(R.string.HighRinsID, "HIGH"),
+            AdUtils.Companion.SplashAdObject(R.string.MedRinsID, "MED")
+        )
         val testDeviceIds = RequestConfiguration.Builder()
             .setTagForChildDirectedTreatment(RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
-            .setTestDeviceIds(listOf("57BEA9A19CDAF54CBAA1EC9F0F138E7E")).build()
+            .build()
         MobileAds.setRequestConfiguration(testDeviceIds)
-        MobileAds.initialize(
-            this
+        AdUtils.initializeMobileAds(
+            this,
+            "D7E191EB0B1EB4A017142B4229B8730D",
+            appOpenAdMobAds
         ) {
-/*
-            if (BuildConfig.DEBUG) {
-                goToHomeAct()
-            } else {
-            }
-*/
-            showAppOpenAd(this)
+            AdUtils.showAppOpenAd(this, openListener = object : AdUtils.Companion.AppOpenListener {
+                override fun moveNext() {
+                    AdUtils.loadSplashAD(
+                        this@SplashScreen,
+                        adList,
+                        object : AdUtils.Companion.SplashAdListener {
+                            override fun moveNext() {
+                                goToHomeAct()
+                            }
+                        },
+                        0
+                    )
+                }
+            })
         }
-
-
     }
 
     fun showAppOpenAd(activity: Activity) {
