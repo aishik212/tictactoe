@@ -1,2 +1,19 @@
 include ':app'
 include ':AdMaster'
+include ':apprating'
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+        google()
+        mavenCentral()
+        maven {
+            name "Huvle"
+            url "https://sdk.huvle.com/repository/internal"
+        }
+        maven { url 'https://jitpack.io' }
+
+    }
+}

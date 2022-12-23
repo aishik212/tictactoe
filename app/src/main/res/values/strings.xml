@@ -15,6 +15,14 @@
     <string name="AllappOpenID">ca-app-pub-5453528366471630/6878124416</string>
     <string name="MedappOpenID">ca-app-pub-5453528366471630/8003218419</string>
 
+    <string name="BannerHighID">ca-app-pub-5453528366471630/7685592987</string>
+    <string name="BannerMedID">ca-app-pub-5453528366471630/9236695417</string>
+    <string name="BannerLowID">ca-app-pub-5453528366471630/5992403210</string>
+    <string name="NativeHighID">ca-app-pub-5453528366471630/6482539568</string>
+    <string name="NativeMedID">ca-app-pub-5453528366471630/5169457890</string>
+    <string name="NativeLowID">ca-app-pub-5453528366471630/6891386068</string>
+
+
     <string name="BasicBannerId">ca-app-pub-5453528366471630/5485765084</string>
     <string name="DialogBannerId">ca-app-pub-5453528366471630/2662737146</string>
     <string name="ExitDialogBannerId">ca-app-pub-5453528366471630/9633154388</string>

@@ -13,6 +13,19 @@
         <item name="android:textColorSecondary">@color/secondaryTextColor</item>
     </style>
 
+    <style name="MyAlertDialogTheme" parent="Theme.AppCompat.DayNight.Dialog">
+        <item name="colorOnSurface">@color/primaryColor</item>
+        <item name="backgroundColor">@color/primaryColor</item>
+        <item name="background">@color/primaryColor</item>
+        <item name="android:background">@color/primaryColor</item>
+        <item name="boxBackgroundColor">@color/primaryColor</item>
+        <item name="colorAccent">@color/primaryLightColor</item>
+        <item name="android:colorBackground">@color/primaryDarkColor</item>
+        <item name="android:windowBackground">@color/primaryDarkColor</item>
+        <item name="android:textColor">@color/primaryTextColor</item>
+        <item name="editTextBackground">@color/white</item>
+    </style>
+
     <style name="MyDarkToolbarStyle" parent="@style/Widget.AppCompat.Spinner.DropDown.ActionBar">
         <item name="android:textColor">@android:color/white</item>
         <item name="background">?android:selectableItemBackground</item>

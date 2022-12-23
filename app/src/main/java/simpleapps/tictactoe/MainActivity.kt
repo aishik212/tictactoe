@@ -3,24 +3,27 @@ package simpleapps.tictactoe
 import android.app.Activity
 import android.app.Dialog
 import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.Intent
 import android.content.Intent.ACTION_VIEW
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.Window
 import android.view.inputmethod.EditorInfo
 import android.widget.*
-import androidx.browser.customtabs.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.allViews
@@ -41,24 +44,26 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+import com.simpleapps.admaster.AdUtils
+import com.suddenh4x.ratingdialog.AppRating
+import com.suddenh4x.ratingdialog.preferences.MailSettings
+import com.suddenh4x.ratingdialog.preferences.RatingThreshold
 import de.hdodenhof.circleimageview.CircleImageView
 import simpleapps.tictactoe.ChangeBoardColor.Companion.purchases
 import simpleapps.tictactoe.ChangeBoardColor.Companion.purchasesUpdatedListener
-import simpleapps.tictactoe.Utils.AdUtils.showBannerAd
+import simpleapps.tictactoe.LeaderboardActivity.Companion.clickOnline
 import simpleapps.tictactoe.Utils.G_CODE
 import simpleapps.tictactoe.Utils.LoginMethod
-import simpleapps.tictactoe.Utils.gameViewType
 import simpleapps.tictactoe.Utils.login
 import simpleapps.tictactoe.Utils.mAuth
-import simpleapps.tictactoe.Utils.setGameView
+import kotlin.math.roundToInt
 
 
-class MainActivity : Activity(), View.OnClickListener {
+class MainActivity : AppCompatActivity(), View.OnClickListener {
     var plyr1: EditText? = null
     var plyr2: EditText? = null
     var difficulty: Spinner? = null
@@ -214,9 +219,7 @@ class MainActivity : Activity(), View.OnClickListener {
             if (shade <= drawableLimit) {
                 val s = tag + (shade + 1)
                 val identifier = activity.resources.getIdentifier(
-                    s,
-                    "drawable",
-                    activity.packageName
+                    s, "drawable", activity.packageName
                 )
                 setVBG(view, ResourcesCompat.getDrawable(activity.resources, identifier, null))
             } else {
@@ -226,14 +229,12 @@ class MainActivity : Activity(), View.OnClickListener {
                     drawableLimit + 3 -> view.setBackgroundColor(Color.GREEN)
                     drawableLimit + 4 -> view.setBackgroundColor(
                         ContextCompat.getColor(
-                            activity,
-                            R.color.primaryColor
+                            activity, R.color.primaryColor
                         )
                     )
                     drawableLimit + 5 -> view.setBackgroundColor(
                         ContextCompat.getColor(
-                            activity,
-                            R.color.secondaryColor
+                            activity, R.color.secondaryColor
                         )
                     )
                 }
@@ -259,7 +260,6 @@ class MainActivity : Activity(), View.OnClickListener {
             showAppOpenAd(this)
         }
 */
-        initCustomtab()
         try {
             FirebaseDatabase.getInstance().setPersistenceEnabled(false)
         } catch (e: Exception) {
@@ -354,10 +354,9 @@ class MainActivity : Activity(), View.OnClickListener {
 //        online_play_btn.performClick()
 //        findViewById<Button>(R.id.change_board).performClick()
 
-        billingClient = BillingClient.newBuilder(applicationContext)
-            .setListener(purchasesUpdatedListener)
-            .enablePendingPurchases()
-            .build()
+        billingClient =
+            BillingClient.newBuilder(applicationContext).setListener(purchasesUpdatedListener)
+                .enablePendingPurchases().build()
 
         billingClient?.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
@@ -405,16 +404,19 @@ class MainActivity : Activity(), View.OnClickListener {
             }
         })
         loadExitIAD()
-        showBannerAd(
+        /*showBannerAd(
             this,
             getString(R.string.BasicBannerId)
         )
-        showBannerAd(this, getString(R.string.BasicBannerId))
+        showBannerAd(this, getString(R.string.BasicBannerId))*/
+        AdUtils.showAdFromChoices(findViewById(R.id.bannerAdFrame), this, lifecycle)
+        if (BuildConfig.DEBUG) {
+            findViewById<Button>(R.id.leaderboard).performClick()
+        }
     }
 
     private fun loadExitIAD() {
-        InterstitialAd.load(
-            this,
+        InterstitialAd.load(this,
             getString(R.string.ExitIntersId),
             AdRequest.Builder().build(),
             object : InterstitialAdLoadCallback() {
@@ -470,14 +472,7 @@ class MainActivity : Activity(), View.OnClickListener {
                     }
                 }
             }
-            object : CountDownTimer(1500, 500) {
-                override fun onTick(millisUntilFinished: Long) {
-                }
-
-                override fun onFinish() {
-                    iad?.show(this@MainActivity)
-                }
-            }.start()
+            Handler(Looper.getMainLooper()).postDelayed({ iad?.show(this@MainActivity) }, 1500)
         } else {
             try {
                 textView.visibility = GONE
@@ -501,11 +496,12 @@ class MainActivity : Activity(), View.OnClickListener {
         dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_layout_exit)
-        showBannerAd(
+        /*showBannerAd(
             this,
             getString(R.string.ExitDialogBannerId),
             dialog.findViewById(R.id.dialogbannerAdFrame)
-        )
+        )*/
+        AdUtils.showAdFromChoices(dialog.findViewById(R.id.dialogbannerAdFrame), this, lifecycle)
         dialog.setCancelable(false)
         dialog.show()
         val exit: Button = dialog.findViewById(R.id.yes_button)
@@ -518,10 +514,61 @@ class MainActivity : Activity(), View.OnClickListener {
         }
     }
 
+    lateinit var customTheme: AppRating.Builder
+    override fun onResume() {
+        super.onResume()
+        val gameCount = sharedPreferences.getInt("gameCount", 0)
+        Log.d("texts", "onResume: " + gameCount)
+        if (gameCount > 2) {
+            val mailSettings = MailSettings(
+                "simpleappsofficial@gmail.com",
+                "Bug Report ${getString(R.string.app_name)}",
+                "Please Enter Your Feedback Here \n"
+            )
+
+            val bundle = Bundle()
+            customTheme = AppRating.Builder(this).setMinimumLaunchTimes(0).setMinimumDays(0)
+                .setMinimumLaunchTimesToShowAgain(0).setMinimumDaysToShowAgain(0)
+                .setShowOnlyFullStars(true).setMailSettingsForFeedbackDialog(mailSettings)
+                .setRateLaterButtonClickListener {
+                    bundle.putString(EventKeys.RATING.name, "RATE LATER")
+                    logEvent(EventKeys.RATING.name, bundle)
+                }.setNoFeedbackButtonClickListener {
+                    bundle.putString(EventKeys.RATING.name, "NO FEEDBACK")
+                    logEvent(EventKeys.RATING.name, bundle)
+                }.setConfirmButtonClickListener { userRating ->
+                    bundle.putString(
+                        EventKeys.RATING.name, "RATE - ${userRating.roundToInt()}"
+                    )
+                    logEvent(EventKeys.RATING.name, bundle)
+                }.setGoogleInAppReviewCompleteListener {
+                    bundle.putString(
+                        EventKeys.RATING.name, "REVIEWED_DIALOG"
+                    )
+                    logEvent(EventKeys.RATING.name, bundle)
+                }.setRatingThreshold(RatingThreshold.FOUR)
+                .setCustomTheme(R.style.MyAlertDialogTheme)
+            customTheme.showIfMeetsConditions()
+        }
+        if (clickOnline) {
+            clickOnline = false
+            findViewById<Button>(R.id.startOnline).performClick()
+        }
+    }
+
+    enum class EventKeys {
+        RATING
+    }
+
+    val sharedPreferences: SharedPreferences by lazy { getSharedPreferences(packageName, 0) }
 
     private fun logGameEvent(gameType: String) {
+        val gameCount = sharedPreferences.getInt("gameCount", 0) + 1
+        sharedPreferences.edit().putInt("gameCount", gameCount).apply()
+
         val bundle = Bundle()
         bundle.putString("game_type", gameType)
+        bundle.putInt("game_count", gameCount)
         FirebaseAnalytics.getInstance(applicationContext).logEvent("game_type", bundle)
     }
 
@@ -544,15 +591,9 @@ class MainActivity : Activity(), View.OnClickListener {
         remoteConfig.setConfigSettingsAsync(configSettings)
         remoteConfig.fetchAndActivate().addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
-                gameViewType = remoteConfig.getLong("games_view_type")
-                setGameView(this)
-            } else {
-                setGameView(this)
 
             }
-        }.addOnFailureListener {
-            setGameView(this)
-        }
+        }.addOnFailureListener {}
     }
 
     fun addItemToDifficultySpinner() {
@@ -570,10 +611,7 @@ class MainActivity : Activity(), View.OnClickListener {
             try {
                 difficulty1.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                     override fun onItemSelected(
-                        parent: AdapterView<*>?,
-                        view: View?,
-                        position: Int,
-                        id: Long
+                        parent: AdapterView<*>?, view: View?, position: Int, id: Long
                     ) {
                         try {
                             if (parent != null) {
@@ -741,111 +779,24 @@ class MainActivity : Activity(), View.OnClickListener {
         }
     }
 
-    var mClient: CustomTabsClient? = null
-    private fun initCustomtab() {
-        CustomTabsClient.bindCustomTabsService(
-            applicationContext,
-            "com.android.chrome",
-            object : CustomTabsServiceConnection() {
-                override fun onCustomTabsServiceConnected(
-                    name: ComponentName,
-                    client: CustomTabsClient
-                ) {
-                    var errorLocation: String = "A"
-                    try {
-                        // mClient is now valid.
-                        mClient = client
-                        errorLocation = "B"
-                        if (mClient != null) {
-                            mClient?.warmup(0)
-                            val session: CustomTabsSession? =
-                                mClient?.newSession(CustomTabsCallback())
-                            builder1 = initBuilder(session)
-                            session!!.mayLaunchUrl(Uri.parse(gameZopUrl), null, null)
-                        }
-                        errorLocation = "H"
-                    } catch (e: Exception) {
-                        FirebaseCrashlytics.getInstance().log("Error in location -> $errorLocation")
-                    }
-                }
 
-                override fun onServiceDisconnected(name: ComponentName?) {
-                    mClient = null
-                }
-            })
-        CustomTabsClient.connectAndInitialize(applicationContext, packageName)
-
-    }
-
-    lateinit var builder1: CustomTabsIntent.Builder
-    private fun initBuilder(session: CustomTabsSession?): CustomTabsIntent.Builder {
-        val builder = CustomTabsIntent.Builder()
-        if (session != null) {
-            builder.setSession(session)
-        }
-        builder.setStartAnimations(
-            this,
-            android.R.anim.slide_in_left,
-            android.R.anim.slide_out_right
-        )
-        builder.setExitAnimations(
-            this,
-            android.R.anim.slide_in_left,
-            android.R.anim.slide_out_right
-        )
-        val colorInt = ContextCompat.getColor(
-            applicationContext,
-            R.color.primaryColor
-        ) //red
-        val defaultColors = CustomTabColorSchemeParams.Builder()
-            .setToolbarColor(colorInt)
-            .build()
-        builder.setDefaultColorSchemeParams(defaultColors)
-        return builder
-    }
-
-    val gameZopUrl = "https://www.gamezop.com/?id=3759"
     var openCount = 0
-    private fun startGamezopActivity() {
-        if (this::builder1.isInitialized) {
-            try {
-                val customTabsIntent: CustomTabsIntent = builder1.build()
-                customTabsIntent.launchUrl(this, Uri.parse(gameZopUrl))
-            } catch (e: Exception) {
-                val uri = Uri.parse(gameZopUrl)
-                val i1 = Intent(ACTION_VIEW)
-                i1.data = uri
-                startActivity(i1)
-            }
-        } else {
-            val uri = Uri.parse(gameZopUrl)
-            val i1 = Intent(ACTION_VIEW)
-            i1.data = uri
-            startActivity(i1)
-        }
-        try {
-            val instance = FirebaseAnalytics.getInstance(applicationContext)
-            val bundle = Bundle()
-            bundle.putInt("viewType", gameViewType.toInt())
-            bundle.putInt("appOpenCount", openCount)
-            instance.logEvent("GameZopClick", bundle)
-        } catch (e: Exception) {
-
-        }
-    }
 
     override fun onClick(p0: View?) {
         if (p0 != null) {
             when (p0.id) {
+                R.id.leaderboard -> {
+                    val b = Bundle()
+                    b.putString("clickedOn", "leaderboard")
+                    logEvent("click", b)
+                    startActivity(Intent(this, LeaderboardActivity::class.java))
+                }
                 R.id.change_board -> {
                     val b = Bundle()
                     b.putString("clickedOn", "change")
                     b.putInt("openCount", openCount)
                     logEvent("click", b)
                     startActivity(Intent(this, ChangeBoardColor::class.java))
-                }
-                R.id.game_button -> {
-                    startGamezopActivity()
                 }
                 R.id.startOnline -> {
                     //True if logged in
@@ -916,19 +867,13 @@ class MainActivity : Activity(), View.OnClickListener {
                         removeWaitListener()
                     } else {
                         val uid1 = mAuth?.currentUser?.uid
-                        val child1 = waitingRef
-                            .child(uid1 + "")
-                            .child("name")
-                        child1.setValue("$displayName",
-                            object : DatabaseReference.CompletionListener {
-                                override fun onComplete(
-                                    error: DatabaseError?,
-                                    ref: DatabaseReference
-                                ) {
-                                    checkForMatches()
-                                    showLoader()
-                                }
-                            })
+                        val child1 = waitingRef.child(uid1 + "").child("name")
+                        child1.setValue(
+                            "$displayName"
+                        ) { _, _ ->
+                            checkForMatches()
+                            showLoader()
+                        }
                         /*.addOnSuccessListener {
                         Log.d("texts", "onDataChange: ")
                         checkForMatches()
@@ -944,18 +889,18 @@ class MainActivity : Activity(), View.OnClickListener {
                 override fun onCancelled(error: DatabaseError) {
                 }
             }
-            database.child("waiting")
-                .addListenerForSingleValueEvent(listener)
+            database.child("waiting").addListenerForSingleValueEvent(listener)
         }
     }
 
     private fun showLoader() {
         searchIncludeLayout.visibility = VISIBLE
-        showBannerAd(
+        /*showBannerAd(
             this,
             getString(R.string.BasicBannerId),
             (findViewById(R.id.searchBannerAdFrame))
-        )
+        )*/
+        AdUtils.showAdFromChoices(findViewById(R.id.adView), this, lifecycle)
         startLoader()
     }
 
@@ -997,12 +942,10 @@ class MainActivity : Activity(), View.OnClickListener {
 
 
     private fun sanitize_user_db(
-        database: DatabaseReference,
-        uid: String
+        database: DatabaseReference, uid: String
     ) {
         try {
-            database.child("waiting").child(uid).removeValue().addOnFailureListener {
-            }
+            database.child("waiting").child(uid).removeValue().addOnFailureListener {}
             database.child("matches").child(uid).removeValue()
         } catch (e: Exception) {
         }
@@ -1030,8 +973,7 @@ class MainActivity : Activity(), View.OnClickListener {
                     i.putExtra("hard", hard)
                     i.putExtra("impossible", impossible)
                     i.putExtra(
-                        "playersnames",
-                        arrayOf(p1, p2)
+                        "playersnames", arrayOf(p1, p2)
                     )
                     if (gameID.toString().startsWith(mAuth?.currentUser?.uid.toString())) {
                         i.putExtra("player1ax", true)

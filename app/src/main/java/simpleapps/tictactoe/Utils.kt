@@ -7,17 +7,14 @@ import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
-import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.setMargins
-import com.bumptech.glide.Glide
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.appopen.AppOpenAd.AppOpenAdLoadCallback
@@ -60,6 +57,9 @@ object Utils {
             LoginMethod.F -> {
 
             }
+            else -> {
+
+            }
         }
     }
 
@@ -72,30 +72,6 @@ object Utils {
         }
         return FirebaseDatabase.getInstance("https://simpleapps-6a092-default-rtdb.asia-southeast1.firebasedatabase.app")
             .getReference(replace)
-    }
-
-    @JvmStatic
-    var gameViewType: Long = 1
-    fun setGameView(activity: Activity) {
-        val view1 = activity.findViewById<View>(R.id.gamel1)
-        val view2 = activity.findViewById<View>(R.id.gamel2)
-        val view3 = activity.findViewById<View>(R.id.gamel3)
-        val view4 = activity.findViewById<View>(R.id.gamel4)
-        view1.visibility = GONE
-        view2.visibility = GONE
-        view3.visibility = GONE
-        view4.visibility = GONE
-        when (gameViewType.toInt()) {
-            2 -> view2.visibility = VISIBLE
-            3 -> view3.visibility = VISIBLE
-            4 -> view4.visibility = VISIBLE
-            else -> {
-                val gifView = view1.findViewWithTag<ImageView>("giphy")
-                Glide.with(activity).load(ContextCompat.getDrawable(activity, R.drawable.banner8))
-                    .into(gifView)
-                view1.visibility = VISIBLE
-            }
-        }
     }
 
 

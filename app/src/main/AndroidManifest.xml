@@ -30,7 +30,7 @@
             android:label="@string/title_activity_afterstart"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".SplashScreen"
+            android:name=".StartActivity"
             android:exported="true"
             android:theme="@style/MyTheme">
             <intent-filter>
@@ -42,6 +42,7 @@
             android:name=".AfterstartOnline"
             android:screenOrientation="sensorPortrait" />
         <activity android:name=".ChangeBoardColor" />
+        <activity android:name=".LeaderboardActivity" />
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

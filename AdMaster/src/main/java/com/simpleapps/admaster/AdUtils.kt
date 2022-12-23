@@ -4,12 +4,11 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
-import android.os.Bundle
-import android.os.CountDownTimer
-import android.os.Handler
-import android.os.Looper
+import android.os.*
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -21,7 +20,15 @@ import android.widget.Toast
 import androidx.browser.customtabs.*
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.BasicNetwork
+import com.android.volley.toolbox.DiskBasedCache
+import com.android.volley.toolbox.HurlStack
+import com.android.volley.toolbox.StringRequest
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener
@@ -29,12 +36,14 @@ import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.perf.ktx.performance
 import com.google.firebase.perf.metrics.Trace
+import com.google.gson.Gson
+import com.simpleapps.admaster.databinding.IngrownAdLayoutBinding
 import com.simpleapps.admaster.nativeTemplates.NativeTemplateStyle
 import com.simpleapps.admaster.nativeTemplates.TemplateView
 import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 @SuppressLint("MissingPermission")
 class AdUtils {
@@ -52,12 +61,14 @@ class AdUtils {
         var bannerAdmobAds: List<bannerAdObject>? = null
         var appOpenAdMobAds: List<Int>? = null
 
+        private val inGrownAdList: MutableList<InGrowsAdsModel> = mutableListOf()
+
         fun initializeMobileAds(
             activity: Activity,
             testAdId: String,
             appOpenAdMobAds: List<Int>,
-            bannerAdmobAds: List<bannerAdObject>? = null,
-            onInitializationCompleteListener: OnInitializationCompleteListener
+            bannerAdmobAds: List<bannerAdObject>,
+            onInitializationCompleteListener: OnInitializationCompleteListener,
         ) {
             MobileAds.initialize(activity, onInitializationCompleteListener)
             val testDeviceIds = RequestConfiguration.Builder()
@@ -65,6 +76,59 @@ class AdUtils {
             MobileAds.setRequestConfiguration(testDeviceIds)
             this.appOpenAdMobAds = appOpenAdMobAds
             this.bannerAdmobAds = bannerAdmobAds
+
+            val preferences = activity.getSharedPreferences("AdList", 0)
+            val timeLeft = System.currentTimeMillis() - preferences.getLong(
+                "time",
+                0L
+            )
+            var adData = preferences.getString("response", null)
+            if (!preferences.contains("time") || !(timeLeft < 0 && adData != null)) {
+                val cache = DiskBasedCache(activity.cacheDir, 1024 * 1024)
+                val network = BasicNetwork(HurlStack())
+                val queue = RequestQueue(cache, network).apply {
+                    start()
+                }
+                val url = if (BuildConfig.DEBUG) {
+                    "https://api.npoint.io/607d32c2b4693654c61f"
+                } else {
+                    "https://api.npoint.io/38236c82b5224d13a0c1"
+                }
+                val stringRequest = StringRequest(
+                    Request.Method.GET, url,
+                    { response ->
+                        preferences.edit()
+                            .putLong("time", System.currentTimeMillis() + (24 * 60 * 60 * 1000))
+                            .apply()
+                        preferences.edit().putString("response", response).apply()
+                        adData = response
+                        updateAdList(adData, activity.packageName)
+                    },
+                    { Log.d("texts", "initializeMobileAds: " + it.message) })
+                queue.add(stringRequest)
+            } else {
+                updateAdList(adData, activity.packageName)
+            }
+        }
+
+        private fun updateAdList(adData: String?, activity: String) {
+            val appListModel = Gson().fromJson(adData, AppListModel::class.java)
+            appListModel.appLists.iterator().forEach { appDetails ->
+                if (appDetails.appName == "GameZop") {
+                    val element = listOf(
+                        InGrowsAdsModel(
+                            "GameZop",
+                            1,
+                            null
+                        )
+                    )
+                    inGrownAdList.addAll(element)
+                } else {
+                    if (appDetails.packageName != activity.replace(".debug", "")) {
+                        inGrownAdList.add(InGrowsAdsModel(appDetails.type, 1, null, appDetails))
+                    }
+                }
+            }
         }
 
 
@@ -81,7 +145,7 @@ class AdUtils {
 
 
         private fun loadRInterAd(activity: Activity, i: Int, adList: List<Int>) {
-            if (bought == 0 && (adList.size < i)) {
+            if (bought == 0 && (adList.size > i)) {
                 when (i) {
                     0 -> {
                         loadRAD(
@@ -111,6 +175,8 @@ class AdUtils {
                         )
                     }
                 }
+            } else {
+
             }
         }
 
@@ -119,32 +185,37 @@ class AdUtils {
             adId: String,
             i: Int,
             type: String,
-            adList: List<Int>
+            adList: List<Int>,
         ) {
-            RewardedInterstitialAd.load(
-                activity,
-                adId,
-                AdRequest.Builder().build(),
-                object : RewardedInterstitialAdLoadCallback() {
-                    override fun onAdLoaded(rewardedInterstitialAd: RewardedInterstitialAd) {
-                        super.onAdLoaded(rewardedInterstitialAd)
-                        logAdResult(type + "_load", null, null, activity)
-                        TestRewardedInterstitialAd = rewardedInterstitialAd
-                    }
+            try {
+                activity.runOnUiThread {
+                    RewardedInterstitialAd.load(
+                        activity,
+                        adId,
+                        AdRequest.Builder().build(),
+                        object : RewardedInterstitialAdLoadCallback() {
+                            override fun onAdLoaded(rewardedInterstitialAd: RewardedInterstitialAd) {
+                                super.onAdLoaded(rewardedInterstitialAd)
+                                logAdResult(type + "_load", null, null, activity)
+                                TestRewardedInterstitialAd = rewardedInterstitialAd
+                            }
 
-                    override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                        super.onAdFailedToLoad(loadAdError)
-                        logAdResult(null, type, loadAdError.message, activity)
-                        TestRewardedInterstitialAd = null
-                        loadRInterAd(activity, i, adList)
-                    }
-                })
+                            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                                super.onAdFailedToLoad(loadAdError)
+                                logAdResult(null, type, loadAdError.message, activity)
+                                TestRewardedInterstitialAd = null
+                                loadRInterAd(activity, i, adList)
+                            }
+                        })
+                }
+            } catch (e: Exception) {
+            }
         }
 
         fun loadSimpleInters(
             activity: Activity?,
             adLoadingView: View?,
-            adList: List<Int>
+            adList: List<Int>,
         ) {
             if (bought == 0 && activity != null) {
                 if (adLoadingView != null) {
@@ -153,7 +224,7 @@ class AdUtils {
                 Handler(Looper.getMainLooper()).postDelayed({
                     try {
                         if (adLoadingView != null) {
-                            adLoadingView.visibility = GONE
+                            adLoadingView.visibility = View.GONE
                         }
                         val shown =
                             activity.window.decorView.rootView.isShown
@@ -165,7 +236,7 @@ class AdUtils {
                             )
                         }
                         if (adLoadingView != null) {
-                            adLoadingView.visibility = GONE
+                            adLoadingView.visibility = View.GONE
                         }
                     } catch (e: java.lang.Exception) {
                         TestRewardedInterstitialAd?.show(activity) { }
@@ -173,7 +244,7 @@ class AdUtils {
                 }, 2000)
             } else {
                 if (adLoadingView != null) {
-                    adLoadingView.visibility = GONE
+                    adLoadingView.visibility = View.GONE
                 }
             }
         }
@@ -191,64 +262,147 @@ class AdUtils {
                 frameLayout.addView(
                     inflate
                 )
+                setFrameMaxHeight(frameLayout)
                 frameLayout.visibility = VISIBLE
             }
         }
 
+        var frameMaxHeight = 100
+        private fun setFrameMaxHeight(frameLayout: FrameLayout) {
+            frameMaxHeight = max(frameMaxHeight, frameLayout.measuredHeight)
+            frameLayout.minimumHeight = frameMaxHeight
+        }
+
         fun showInGrownBannerAd(
             frameLayout: FrameLayout,
-            activity: Activity
+            activity: Activity,
         ) {
-            val imageView = ImageView(activity)
-            var inGrownNotify = R.drawable.in_grown_notify
-            val roundNum = floor(Math.random() * 6.0).toInt()
-            var url = "https://notificationshortcuts.page.link/notifApp"
-            var s = "NOTIF"
-            val s1 = "INGROWN_BANNER"
-//            checkSpread()
-            frameLayout.visibility = VISIBLE
-            adLoadingMessage(frameLayout, activity)
-            when (roundNum) {
+            if (!activity.isDestroyed && !activity.isFinishing) {
+                val imageView = ImageView(activity)
+                frameLayout.visibility = VISIBLE
+                adLoadingMessage(frameLayout, activity)
+                if (inGrownAdList.isNotEmpty()) {
+                    /*
+                    Log.d("texts", "showInGrownBannerAd: "+ inGrownAdList.size)
+                    inGrownAdList.iterator().forEach {
+                        Log.d("texts", "showInGrownBannerAd: " + it)
+                    }
+                    */
+                    val (adName, type, url, appDetails) = inGrownAdList.random()
+                    when (adName) {
+                        "NotifyApp" -> {
+                            loadNotifyApp(
+                                type,
+                                url,
+                                activity,
+                                imageView,
+                                frameLayout,
+                                adName
+                            )
+                        }
+                        "GameZop" -> {
+                            loadGameZopAd(activity, frameLayout)
+                        }
+                        "NATIVE_APP" -> {
+                            loadNativeIngrownAds(activity, frameLayout, appDetails)
+                        }
+                    }
+                } else {
+                    loadGameZopAd(activity, frameLayout)
+                }
+            }
+        }
+
+        private fun loadNativeIngrownAds(
+            activity: Activity,
+            frameLayout: FrameLayout,
+            appDetails: AppListModel.AppDetails?,
+        ) {
+            val inflate = IngrownAdLayoutBinding.inflate(activity.layoutInflater)
+            val icon = inflate.icon
+            if (appDetails != null) {
+                Glide.with(icon).load(appDetails.iconUrl).diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(icon)
+                val appName = appDetails.appName.replace(" ", "_")
+                inflate.title.text = appDetails.appName
+                if (appDetails.titles.isNotEmpty()) {
+                    inflate.subtitle.text = appDetails.titles.random()
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    inflate.title.setTextAppearance(androidx.appcompat.R.style.TextAppearance_AppCompat_Medium)
+                    inflate.subtitle.setTextAppearance(androidx.appcompat.R.style.TextAppearance_AppCompat_Small)
+                }
+                inflate.title.setTextColor(Color.BLACK)
+                inflate.subtitle.setTextColor(Color.DKGRAY)
+                inflate.cl.setBackgroundColor(Color.WHITE)
+                frameLayout.removeAllViews()
+                frameLayout.addView(inflate.root)
+                setFrameMaxHeight(frameLayout)
+                frameLayout.setOnClickListener {
+                    logAdResult("Click_INGROWN_APP_$appName", null, null, activity)
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data =
+                        Uri.parse("https://play.google.com/store/apps/details?id=${appDetails.packageName}")
+                    startA(activity, intent)
+                }
+                logAdResult("INGROWN_BANNER_$appName", null, null, activity)
+            }
+
+        }
+
+        private fun loadGameZopAd(
+            activity: Activity,
+            frameLayout: FrameLayout,
+        ) {
+            var layout = R.layout.game_layout_1
+            val roundToInt = ((Math.random() * 2) + 1).roundToInt()
+            when (roundToInt) {
                 1 -> {
-                    inGrownNotify = R.drawable.in_grown_notify
-                    url = "https://notificationshortcuts.page.link/notifApp"
-                    loadAdImage(activity, inGrownNotify, imageView, frameLayout, url, s1, s)
+                    layout = R.layout.game_layout_1
                 }
                 2 -> {
-                    inGrownNotify = R.drawable.in_grown_notify2
-                    url = "https://notificationshortcuts.page.link/notifApp"
-                    loadAdImage(activity, inGrownNotify, imageView, frameLayout, url, s1, s)
+                    layout = R.layout.game_layout_2
                 }
                 3 -> {
-                    s = "GAME_ZOP"
-                    loadAdLayout(
-                        activity,
-                        R.layout.game_layout_1,
-                        frameLayout,
-                        s1,
-                        s
-                    )
+                    layout = R.layout.game_layout_3
+
                 }
-                4 -> {
-                    s = "GAME_ZOP"
-                    loadAdLayout(
-                        activity,
-                        R.layout.game_layout_2,
-                        frameLayout,
-                        s1,
-                        s
-                    )
+            }
+            loadAdLayout(
+                activity,
+                layout,
+                frameLayout
+            )
+        }
+
+        private fun loadNotifyApp(
+            type: Int,
+            url: String?,
+            activity: Activity,
+            imageView: ImageView,
+            frameLayout: FrameLayout,
+            adName: String,
+        ) {
+            var inGrownNotify1 = R.drawable.in_grown_notify
+            when (type) {
+                1 -> {
+                    inGrownNotify1 = R.drawable.in_grown_notify
                 }
-                5 -> {
-                    s = "GAME_ZOP"
-                    loadAdLayout(
-                        activity,
-                        R.layout.game_layout_3,
-                        frameLayout,
-                        s1,
-                        s
-                    )
+                2 -> {
+                    inGrownNotify1 = R.drawable.in_grown_notify2
                 }
+            }
+            if (url != null) {
+                loadAdImage(
+                    activity,
+                    inGrownNotify1,
+                    imageView,
+                    frameLayout,
+                    url,
+                    "INGROWN_BANNER",
+                    adName
+                )
             }
         }
 
@@ -256,19 +410,18 @@ class AdUtils {
             activity: Activity,
             layout: Int,
             frameLayout: FrameLayout,
-            s1: String,
-            s: String
         ) {
 
             val inflate = activity.layoutInflater.inflate(layout, null)
             frameLayout.removeAllViews()
             val view = inflate.rootView.findViewById<CardView>(R.id.game_button)
             view.setOnClickListener {
-                logAdResult("Click_" + s1 + "_" + s, null, null, activity)
+                logAdResult("Click_INGROWN_BANNER_GameZop", null, null, activity)
                 startGamezopActivity(activity)
             }
-            logAdResult(s1 + "_" + s, null, null, activity)
+            logAdResult("INGROWN_BANNER_GameZop", null, null, activity)
             frameLayout.addView(view)
+            setFrameMaxHeight(frameLayout)
         }
 
         val gameZopUrl = "https://www.gamezop.com/?id=3759"
@@ -304,7 +457,7 @@ class AdUtils {
             frameLayout: FrameLayout,
             url: String,
             s1: String,
-            s: String
+            s: String,
         ) {
             Glide.with(activity)
                 .load(ContextCompat.getDrawable(activity, inGrownNotify))
@@ -323,6 +476,7 @@ class AdUtils {
             )
             logAdResult(s1 + "_" + s, null, null, activity)
             frameLayout.addView(imageView)
+            setFrameMaxHeight(frameLayout)
         }
 
 
@@ -342,7 +496,7 @@ class AdUtils {
             adType: String?,
             errorAdType: String?,
             error: String?,
-            activity: Activity?
+            activity: Activity?,
         ) {
 //            Log.d("texts", "logAdResult: "+adType+" "+errorAdType)
             var error = error
@@ -379,7 +533,7 @@ class AdUtils {
                 object : CustomTabsServiceConnection() {
                     override fun onCustomTabsServiceConnected(
                         name: ComponentName,
-                        client: CustomTabsClient
+                        client: CustomTabsClient,
                     ) {
                         // mClient is now valid.
                         try {
@@ -404,7 +558,7 @@ class AdUtils {
 
         private fun initBuilder(
             activity: Activity,
-            session: CustomTabsSession?
+            session: CustomTabsSession?,
         ): CustomTabsIntent.Builder {
             val builder = CustomTabsIntent.Builder()
             if (session != null) {
@@ -452,7 +606,7 @@ class AdUtils {
         var num = 0
         var appOpenCTD: CountDownTimer? = null
         var intersCTD: CountDownTimer? = null
-        val l: Long = 7500
+        val l: Long = 6000
         var showAppOpenAd = true
         var showSplashAd = true
 
@@ -554,7 +708,7 @@ class AdUtils {
         private fun appOpenAdLoadCallback(
             activity: Activity,
             openListener: AppOpenListener,
-            trace: Trace?
+            trace: Trace?,
         ) =
             object : AppOpenAd.AppOpenAdLoadCallback() {
                 override fun onAdLoaded(ad: AppOpenAd) {
@@ -632,12 +786,12 @@ class AdUtils {
 
         data class SplashAdObject(
             val id: Int,
-            val type: String
+            val type: String,
         )
 
         data class bannerAdObject(
             val id: Int,
-            val type: String
+            val type: String,
         )
 
 
@@ -645,14 +799,14 @@ class AdUtils {
             activity: Activity,
             adList: List<SplashAdObject>,
             splashAdListener: SplashAdListener,
+            trace: Trace? = null,
             num: Int = 0,
         ) {
-            val trace = Firebase.performance.newTrace("SplashAdLoad")
             if (bought == 0) {
                 try {
-                    trace.start()
+                    trace?.start()
                     if (intersCTD == null) {
-                        intersCTD = object : CountDownTimer((l / 2), 500) {
+                        intersCTD = object : CountDownTimer(l, 500) {
                             override fun onTick(millisUntilFinished: Long) {
                             }
 
@@ -660,8 +814,8 @@ class AdUtils {
                                 if (showSplashAd) {
                                     logAppOpen(null, "SKIP", "TIMEOUT", activity)
                                     showSplashAd = false
-                                    trace.putAttribute("AdType", "TIMEOUT")
-                                    trace.stop()
+                                    trace?.putAttribute("AdType", "TIMEOUT")
+                                    trace?.stop()
                                     splashAdListener.moveNext()
                                     intersCTD = null
                                 }
@@ -674,7 +828,7 @@ class AdUtils {
                 }
                 if (num <= (adList.size - 1)) {
                     val splashAdObject = adList[num]
-                    trace.putAttribute("AdType", splashAdObject.type)
+                    trace?.putAttribute("AdType", "INTERS_" + splashAdObject.type)
                     if (showSplashAd) {
                         loadAndShowSplashAd(activity, splashAdObject, object : SplashAdListener {
                             override fun moveNext() {
@@ -684,6 +838,7 @@ class AdUtils {
                                         activity,
                                         adList,
                                         splashAdListener,
+                                        trace,
                                         (num + 1)
                                     )
                                 } else {
@@ -696,7 +851,7 @@ class AdUtils {
                         }, trace)
                     } else {
                         if (showSplashAd) {
-                            trace.stop()
+                            trace?.stop()
                             intersCTD?.cancel()
                             splashAdListener.moveNext()
                         }
@@ -704,7 +859,7 @@ class AdUtils {
                     }
                 } else {
                     if (showSplashAd) {
-                        trace.stop()
+                        trace?.stop()
                         intersCTD?.cancel()
                         showSplashAd = false
                         splashAdListener.moveNext()
@@ -713,7 +868,7 @@ class AdUtils {
                 }
             } else {
                 if (showSplashAd) {
-                    trace.stop()
+                    trace?.stop()
                     intersCTD?.cancel()
                     splashAdListener.moveNext()
                 }
@@ -725,7 +880,7 @@ class AdUtils {
             activity: Activity,
             splashAdObject: SplashAdObject,
             splashAdListener: SplashAdListener,
-            trace: Trace
+            trace: Trace?,
         ) {
             RewardedInterstitialAd.load(
                 activity,
@@ -743,11 +898,11 @@ class AdUtils {
                                 activity
                             )
                             showSplashAd = false
-                            trace.putAttribute(
+                            trace?.putAttribute(
                                 "AdType",
                                 "SPLASH_" + splashAdObject.type + "_LOADED"
                             )
-                            trace.stop()
+                            trace?.stop()
                             rewardedInterstitialAd.show(activity) {
 
                             }
@@ -770,7 +925,7 @@ class AdUtils {
                     override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                         super.onAdFailedToLoad(loadAdError)
                         if (showSplashAd) {
-                            trace.putAttribute(
+                            trace?.putAttribute(
                                 "AdType",
                                 "SPLASH_" + splashAdObject.type + "_FAILED"
                             )
@@ -794,7 +949,7 @@ class AdUtils {
             activity: Activity,
             adId: String,
             type: Int?,
-            adTypeLog: String
+            adTypeLog: String,
         ) {
             val adLoader = AdLoader.Builder(activity, adId)
                 .forNativeAd { nativeAd: NativeAd? ->
@@ -810,6 +965,7 @@ class AdUtils {
                         frameLayout.removeAllViews()
                         frameLayout.visibility = VISIBLE
                         frameLayout.addView(template)
+                        setFrameMaxHeight(frameLayout)
                     }
                 }.withAdListener(object : AdListener() {
                     override fun onAdFailedToLoad(loadAdError: LoadAdError) {
@@ -829,7 +985,7 @@ class AdUtils {
             activity: Activity?,
             adId: String,
             type: Int?,
-            logName: String
+            logName: String,
         ) {
             if (frameLayout != null && activity != null) {
                 if (bought == 0) {
@@ -861,7 +1017,7 @@ class AdUtils {
             activity: Activity?,
             frameLayout: FrameLayout,
             type: Int?,
-            logName: String
+            logName: String,
         ) {
             if (bought == 0) {
                 val adRequest = AdRequest.Builder()
@@ -889,6 +1045,7 @@ class AdUtils {
                             frameLayout.visibility = VISIBLE
                             frameLayout.removeAllViews()
                             frameLayout.addView(bannerAdView)
+                            setFrameMaxHeight(frameLayout)
                             logAdResult(logName, null, null, activity)
                         }
                     }
@@ -901,8 +1058,56 @@ class AdUtils {
             }
         }
 
+        val ctdMap: HashMap<Activity, CountDownTimer> = hashMapOf()
+        fun showAdFromChoices(
+            templateView: FrameLayout,
+            activity: Activity,
+            lifecycle: Lifecycle,
+        ) {
+            val countDownTimer = ctdMap[activity]
+            if (countDownTimer == null) {
+//                Log.d("texts", "showAdFromChoices: $adKinowaTimeinSecs")
+                ctdMap[activity] = object : CountDownTimer(adKinowaTimeinSecs * 1000, 1000) {
+                    override fun onTick(p0: Long) {
+                        if (lifecycle.currentState == Lifecycle.State.RESUMED || lifecycle.currentState == Lifecycle.State.INITIALIZED) {
+//                            Log.d("texts", "onTick: " + p0 + " " + activity.javaClass.simpleName)
+                        }
+                    }
+
+                    override fun onFinish() {
+                        showAdAndStartTimer(templateView, activity, lifecycle)
+                    }
+                }
+                showAdAndStartTimer(templateView, activity, lifecycle)
+            } else {
+                showAdAndStartTimer(templateView, activity, lifecycle)
+            }
+//            showAdKinowa(activity, templateView)
+        }
+
+        private fun showAdAndStartTimer(
+            templateView: FrameLayout,
+            activity: Activity,
+            lifecycle: Lifecycle,
+        ) {
+            if (lifecycle.currentState == Lifecycle.State.RESUMED || lifecycle.currentState == Lifecycle.State.INITIALIZED) {
+                showRestOfAds(templateView, activity, 0)
+            }
+            if (!activity.isFinishing && !activity.isDestroyed) {
+                ctdMap[activity]?.start()
+            } else {
+                ctdMap.remove(activity)
+            }
+        }
+
+
         fun showRestOfAds(frameLayout: FrameLayout, activity: Activity?, type: Int) {
             val bannerAdmobAds1 = bannerAdmobAds
+            if (activity != null) {
+                frameLayout.visibility = VISIBLE
+                frameLayout.removeAllViews()
+                adLoadingMessage(frameLayout, activity)
+            }
             if (bought == 0 && activity != null && bannerAdmobAds1 != null) {
                 if (bannerAdmobAds1.size > type) {
                     val bannerAdObject = bannerAdmobAds1[type]

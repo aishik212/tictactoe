@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/bgOpposite"
     android:fitsSystemWindows="true"
-    tools:context="simpleapps.tictactoe.SplashScreen">
+    tools:context="simpleapps.tictactoe.StartActivity">
 
     <ImageView
         android:id="@+id/imageView"
@@ -79,7 +79,7 @@
         android:background="@color/primaryColor"
         android:elevation="10dp"
         android:gravity="center"
-        android:text="Please Wait Loading"
+        android:text="Please Wait Loading Ad..."
         android:textColor="@android:color/black"
         android:textSize="24sp"
         android:visibility="gone"

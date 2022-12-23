@@ -22,7 +22,7 @@ import simpleapps.tictactoe.Utils.AdUtils.logAdResult
 import simpleapps.tictactoe.databinding.ActivitySplashScreenBinding
 
 @SuppressLint("CustomSplashScreen")
-class SplashScreen : AppCompatActivity() {
+class StartActivity : AppCompatActivity() {
     private var loadTv: TextView? = null
     private var loadingTv: TextView? = null
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +38,9 @@ class SplashScreen : AppCompatActivity() {
         loadTv = splashScreenBinding.loadtv
         loadingTv = splashScreenBinding.loadingTv
         initializeAds()
-
+        if (BuildConfig.DEBUG) {
+            AdUtils.adKinowaTimeinSecs = 5
+        }
     }
 
     var num = 0
@@ -46,7 +48,7 @@ class SplashScreen : AppCompatActivity() {
     val l: Long = 6000
     private fun goToHomeAct() {
         ctd.cancel()
-        val intent = Intent(this@SplashScreen, MainActivity::class.java)
+        val intent = Intent(this@StartActivity, MainActivity::class.java)
         startActivity(intent)
         finish()
     }
@@ -72,6 +74,14 @@ class SplashScreen : AppCompatActivity() {
             AdUtils.Companion.SplashAdObject(R.string.HighRinsID, "HIGH"),
             AdUtils.Companion.SplashAdObject(R.string.MedRinsID, "MED")
         )
+        val bannerAdmobAds = listOf(
+            AdUtils.Companion.bannerAdObject(R.string.BannerHighID, "BAN_HIGH"),
+            AdUtils.Companion.bannerAdObject(R.string.NativeLowID, "NATIVE_HIGH"),
+            AdUtils.Companion.bannerAdObject(R.string.BannerMedID, "BAN_MED"),
+            AdUtils.Companion.bannerAdObject(R.string.NativeMedID, "NATIVE_MED"),
+            AdUtils.Companion.bannerAdObject(R.string.BannerLowID, "BAN_ALL"),
+            AdUtils.Companion.bannerAdObject(R.string.NativeLowID, "NATIVE_ALL")
+        )
         val testDeviceIds = RequestConfiguration.Builder()
             .setTagForChildDirectedTreatment(RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
             .build()
@@ -79,20 +89,25 @@ class SplashScreen : AppCompatActivity() {
         AdUtils.initializeMobileAds(
             this,
             "D7E191EB0B1EB4A017142B4229B8730D",
-            appOpenAdMobAds
+            appOpenAdMobAds,
+            bannerAdmobAds
         ) {
             AdUtils.showAppOpenAd(this, openListener = object : AdUtils.Companion.AppOpenListener {
                 override fun moveNext() {
-                    AdUtils.loadSplashAD(
-                        this@SplashScreen,
-                        adList,
-                        object : AdUtils.Companion.SplashAdListener {
-                            override fun moveNext() {
-                                goToHomeAct()
-                            }
-                        },
-                        0
-                    )
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        loadingTv?.visibility = VISIBLE
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            AdUtils.loadSplashAD(
+                                this@StartActivity,
+                                adList,
+                                object : AdUtils.Companion.SplashAdListener {
+                                    override fun moveNext() {
+                                        goToHomeAct()
+                                    }
+                                }, null
+                            )
+                        }, 750)
+                    }, 750)
                 }
             })
         }
@@ -218,13 +233,13 @@ class SplashScreen : AppCompatActivity() {
             override fun onAdLoaded(ad: AppOpenAd) {
                 logAppOpen("LOAD", null, null)
                 if (showAd) {
-                    ad.show(this@SplashScreen)
+                    ad.show(this@StartActivity)
                     ctd.cancel()
                     ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                         override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                             super.onAdFailedToShowFullScreenContent(p0)
                             logAppOpen(null, "SHOW_FAIL", p0.message)
-                            showAppOpenAd(this@SplashScreen)
+                            showAppOpenAd(this@StartActivity)
 //                            loadSplashAd()
                         }
 
@@ -235,7 +250,7 @@ class SplashScreen : AppCompatActivity() {
 
                         override fun onAdDismissedFullScreenContent() {
                             super.onAdDismissedFullScreenContent()
-                            loadSplashAd(this@SplashScreen, 0)
+                            loadSplashAd(this@StartActivity, 0)
                         }
                     }
                 }
@@ -243,7 +258,7 @@ class SplashScreen : AppCompatActivity() {
 
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 logAppOpen(null, "FAIL", loadAdError.message)
-                showAppOpenAd(this@SplashScreen)
+                showAppOpenAd(this@StartActivity)
             }
         }
 

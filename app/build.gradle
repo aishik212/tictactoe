@@ -14,15 +14,15 @@ android {
             keyPassword 'tttkey'
         }
     }
-    compileSdkVersion 33
+    compileSdkVersion 32
     buildToolsVersion '31.0.0'
 
     defaultConfig {
         applicationId "simpleapps.tictactoe"
         minSdkVersion 21
-        targetSdkVersion 33
-        versionCode 25
-        versionName "25_TTT"
+        targetSdkVersion 32
+        versionCode 29
+        versionName "29_TTT"
         signingConfig signingConfigs.tttkey
         multiDexEnabled true
     }
@@ -51,36 +51,42 @@ android {
 
 dependencies {
     implementation project(':AdMaster')
+    implementation project(':apprating')
 
     //FacebookAds
     implementation 'com.facebook.android:facebook-android-sdk:12.0.0'
 
+    //Avatar Generator
+    implementation 'com.github.amoskorir:avatarimagegenerator:1.5.0'
+
 
     //IAB
-    implementation "com.android.billingclient:billing-ktx:5.0.0"
+    implementation "com.android.billingclient:billing-ktx:5.1.0"
 
     //Firebase
 //    implementation platform('com.google.firebase:firebase-bom:30.3.1')
-    implementation 'com.google.firebase:firebase-crashlytics-ktx:18.3.1'
+    implementation 'com.google.firebase:firebase-crashlytics-ktx:18.3.2'
     implementation 'com.google.firebase:firebase-analytics-ktx:21.2.0'
     implementation('com.google.firebase:firebase-auth-ktx:21.1.0') {
         exclude module: "play-services-safetynet"
     }
     implementation 'com.google.firebase:firebase-database-ktx:20.1.0'
     implementation 'com.google.firebase:firebase-config-ktx:21.2.0'
-    implementation 'com.google.firebase:firebase-perf-ktx:20.2.0'
+    implementation 'com.google.firebase:firebase-perf-ktx:20.3.0'
     //--------
 
     //Play Service
-    implementation 'com.google.android.gms:play-services-auth:20.3.0'
+    implementation 'com.google.android.gms:play-services-auth:20.4.0'
     ////Ads
-    implementation 'com.google.android.gms:play-services-ads:21.3.0'
+    implementation 'com.google.android.gms:play-services-ads:21.4.0'
     ////--------
     //--------
 
     //AdMediation
     implementation 'com.google.android.ads:mediation-test-suite:3.0.0'
     //--------
+
+
 
     //GLIDE
     implementation 'com.github.bumptech.glide:glide:4.13.2'
@@ -117,7 +123,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.7.0'
 
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation "androidx.core:core-ktx:1.9.0"
+    implementation "androidx.core:core-ktx:1.8.0"
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.10'
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])

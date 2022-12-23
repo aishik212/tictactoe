@@ -10,9 +10,16 @@
         <string name="SearchBannerId">ca-app-pub-3940256099942544/6300978111</string>
         <string name="ExitIntersId">ca-app-pub-3940256099942544/1033173712</string>-->
     <!--    ADMOB END -->
-    <string name="HighappOpenID">ca-app-pub-5453528366471630/7480972025</string>
-    <string name="AllappOpenID">ca-app-pub-5453528366471630/6878124416</string>
-    <string name="MedappOpenID">ca-app-pub-5453528366471630/8003218419</string>
+    <string name="BannerHighID">ca-app-pub-5453528366471630/7685592987a</string>
+    <string name="NativeHighID">ca-app-pub-5453528366471630/6482539568a</string>
+    <string name="BannerMedID">ca-app-pub-5453528366471630/9236695417a</string>
+    <string name="NativeMedID">ca-app-pub-5453528366471630/5169457890a</string>
+    <string name="BannerLowID">ca-app-pub-5453528366471630/5992403210a</string>
+    <string name="NativeLowID">ca-app-pub-5453528366471630/6891386068a</string>
+
+    <string name="HighappOpenID">ca-app-pub-5453528366471630/7480972025a</string>
+    <string name="AllappOpenID">ca-app-pub-5453528366471630/6878124416a</string>
+    <string name="MedappOpenID">ca-app-pub-5453528366471630/8003218419a</string>
 
     <string name="BasicBannerId">ca-app-pub-5453528366471630/5485765084</string>
     <string name="DialogBannerId">ca-app-pub-5453528366471630/2662737146</string>
@@ -22,7 +29,7 @@
     <string name="ExitIntersId">ca-app-pub-5453528366471630/8461858733</string>
     <string name="InGameIntersId">ca-app-pub-5453528366471630/5531943990</string>
 
-    <string name="HighRinsID">ca-app-pub-5453528366471630/9366317269</string>
-    <string name="MedRinsID">ca-app-pub-5453528366471630/1539798137</string>
-    <string name="AllRinsID">ca-app-pub-5453528366471630/8831168632</string>
+    <string name="HighRinsID">ca-app-pub-5453528366471630/9366317269a</string>
+    <string name="MedRinsID">ca-app-pub-5453528366471630/1539798137a</string>
+    <string name="AllRinsID">ca-app-pub-5453528366471630/8831168632a</string>
 </resources>

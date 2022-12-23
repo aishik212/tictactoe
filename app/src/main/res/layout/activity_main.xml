@@ -13,7 +13,7 @@
         android:background="@color/bgOpposite"
         android:elevation="26dp"
         android:gravity="center"
-        android:text="Loading Ad..."
+        android:text="Please Wait Loading Ad..."
         android:textColor="@color/bgText"
         android:textSize="30sp"
         android:visibility="gone" />
@@ -31,78 +31,10 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/bd2" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout6"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="@color/bgTsColor"
-        android:elevation="10dp"
-        app:layout_constraintBottom_toTopOf="@+id/tc_tv"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <FrameLayout
-            android:id="@+id/gamel3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <include
-                layout="@layout/game_layout_3"
-                android:clickable="false" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/gamel1"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <include
-                layout="@layout/game_layout_1"
-                android:clickable="false" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/gamel4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <include
-                layout="@layout/game_layout_4"
-                android:clickable="false" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/gamel2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <include
-                layout="@layout/game_layout_2"
-                android:clickable="false" />
-        </FrameLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
     <FrameLayout
         android:id="@+id/bannerAdFrame"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -113,7 +45,7 @@
         android:layout_height="0dp"
         android:background="@color/bgTsColor"
         android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/constraintLayout6"
+        app:layout_constraintBottom_toTopOf="@+id/tc_tv"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
@@ -432,6 +364,8 @@
                     android:layout_margin="5dp"
                     android:layout_weight="1"
                     android:background="@drawable/round"
+                    android:lines="1"
+                    android:maxLines="1"
                     android:onClick="startgame"
                     android:text="Play Offline"
                     android:textColor="@android:color/white" />
@@ -445,6 +379,8 @@
                     android:layout_margin="5dp"
                     android:layout_weight="1"
                     android:background="@drawable/round"
+                    android:lines="1"
+                    android:maxLines="1"
                     android:onClick="onClick"
                     android:text="PLAY ONLINE"
                     android:textColor="@android:color/white" />
@@ -460,6 +396,18 @@
                 android:background="@drawable/round"
                 android:onClick="onClick"
                 android:text="Change Board Color"
+                android:textColor="@android:color/white" />
+
+            <Button
+                android:id="@+id/leaderboard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_margin="5dp"
+                android:background="@drawable/round"
+                android:onClick="onClick"
+                android:text="Leaderboard"
                 android:textColor="@android:color/white" />
 
         </LinearLayout>
